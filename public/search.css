@@ -1,0 +1,73 @@
+:root{
+  --primary-100:#e7d1bb;
+  --primary-200:#c8b39e;
+  --primary-300:#84725e;
+  --accent-100:#A096A5;
+  --accent-200:#463e4b;
+  --text-100:#A096A2;
+  --text-200:#847a86;
+  --bg-100:#151931;
+  --bg-200:#252841;
+  --bg-300:#3d3f5b;
+}
+
+
+body {
+  background-color: var(--bg-100);
+}
+
+.title {
+  color: var(--primary-300);
+  justify-content: center;
+}
+label {
+  color: var(--text-100);
+}
+
+.layout{
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.album{
+  width: 33vw;
+}
+
+.album .record{
+  scale: 95%;
+  animation: rotate-cover 0.75s linear infinite;
+}
+
+.album .cover{
+  border-radius: 50%;
+}
+
+.album .sleeve{
+  position: absolute;
+  
+}
+
+.layout table {
+  display: white;
+  font-size: large;
+}
+
+.layout table th{
+  color: var(--primary-200);
+  font-size: 2rem;
+}
+
+.layout table td{
+  color: var(--text-100);
+  font-size: 1rem;
+}
+
+@keyframes rotate-cover {
+  from{
+    transform: rotate(0deg);
+  }to{
+    transform: rotate(360deg);
+  }
+}
