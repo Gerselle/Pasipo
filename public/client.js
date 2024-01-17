@@ -42,8 +42,8 @@ async function search() {
       `\n<tr><th colspan="3"><center>
       ${current_date} - 
       ${album.name} - <b>
-      ${album.artist}</b> - <i>
-      ${album.genres.join(", ")}
+      ${album.artists[0].name}</b> - <i>
+      ${album.genres.slice(0,3).join(", ")}
       </i></center></th></tr>`;
 
     for (let i = 0; i < album.track_list.length; i++) {
