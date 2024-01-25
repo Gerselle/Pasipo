@@ -8,6 +8,8 @@ const redirect_uri = process.env.redirect_uri;
 
 let pasipo = null;
 
+// Uses Spotify api to first find a album result with the given query, returns early with null if no album is found
+// If an album is found, returns a json object of various album data (search_result), which includes an album tracklist
 async function albumSearch(album_query){
   if(pasipo == null || pasipo.expiry_time < Math.floor(Date.now() / 1000 )){
     pasipo = await authorize(null);
@@ -15,65 +17,65 @@ async function albumSearch(album_query){
   
   // Search for a single album
   const album_response = 
-    await fetch(`https://api.spotify.com/v1/search?query=${album_query}&type=album`, { 
+    await fetch(`https://api.spotify.com/v1/search?query=${album_query}&type=album`, 
+      { 
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${pasipo.access_token}`}
       });
 
-  spotify_albums = await (await album_response.json());
-  if(spotify_albums.error || !spotify_albums.albums.total){ // Empty query or no albums found
+  spotify_albums = await(await album_response.json());
+
+  // Empty query or no albums found
+  if(spotify_albums.error || !spotify_albums.albums.items.length){ 
     return null;
   }
 
   album = spotify_albums.albums.items[0];
+  
+  let artists = [];
+  album.artists.forEach((artist) => artists.push({"name": artist.name, "id": artist.id}))
 
-  // Tracklist of found album
-  spotify_track_list = await tracklist(album.id, pasipo.access_token);
-  let track_list = [];
-
-  spotify_track_list.forEach((track) => { 
-      track_info = {
-        "length": track.duration_ms, 
-        "id": track.id, 
-        "name": track.name,
-        "disc": track.disc_number, 
-        "number": track.track_number
-      };
-      track_list.push(track_info);
-    });
-
-  // Genre of album's main artist
   const genre_response = await 
-    fetch(`https://api.spotify.com/v1/artists/${album.artists[0].id}`,{ 
+    fetch(`https://api.spotify.com/v1/artists/${album.artists[0].id}`,
+      { 
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${pasipo.access_token}`}
       });
   genres = (await (await genre_response.json())).genres;
 
-  // Condensed list of artists
-  let artists = [];
-  album.artists.forEach((artist) => artists.push({"name": artist.name, "id": artist.id}))
+  spotify_track_list = await tracklist(album.id, pasipo.access_token);
+  let track_list = [];
 
-  // Return json of album info
-  search_result = {       
-      "name": album.name, 
-      "id": album.id,
-      "url": album.external_urls["spotify"], 
-      "cover": album.images[0].url, 
-      "artists": artists,
-      "genres": genres,  
-      "popularity": album.popularity,
-      "track_list": track_list
+  spotify_track_list.forEach((track) => {
+    track_info = {
+      "name": track.name,
+      "id": track.id,
+      "length": track.duration_ms, 
+      "disc": track.disc_number, 
+      "number": track.track_number
     };
+    track_list.push(track_info);
+  });
+
+  search_result = { 
+      "name": album.name,
+      "id": album.id,  
+      "url": album.external_urls["spotify"], 
+      "cover": album.images[0].url,
+      "popularity": album.popularity,
+      "artists": artists,
+      "genres": genres,
+      "track_list": track_list
+  };
 
   return search_result;
 }
 
+// Uses Spotify api to find the first 50 tracks of album_id, then loops through nesting "next" urls if they exist; returns the resulting track_list
 async function tracklist(album_id){
-  // Grab first 50 tracks of album, then loop through nesting urls if they exist
-  const response = await fetch(`https://api.spotify.com/v1/albums/${album_id}/tracks?limit=50`,
+  const response = await fetch(`https://api.spotify.com/v1/albums/${album_id}/tracks?limit=50`, 
   {
     method: 'GET',
     headers: {
@@ -100,7 +102,10 @@ async function tracklist(album_id){
   return track_list;
 }
 
-async function authorize(code){
+// Uses the Spotify api to obtain a new OAuth token
+// A non null auth_code returns an "authorization code" token (user)
+// A null auth_code returns a "client credential" token (pasipo)
+async function authorize(auth_code){
   request = { 
       method: 'POST',        
       headers: {
@@ -109,8 +114,8 @@ async function authorize(code){
       }
     }
 
-  if(code){
-    request.body = `grant_type=authorization_code&code=${code}&redirect_uri=${redirect_uri}`;
+  if(auth_code){
+    request.body = `grant_type=authorization_code&code=${auth_code}&redirect_uri=${redirect_uri}`;
   }else{
     request.body = `grant_type=client_credentials`;
   }
