@@ -34,7 +34,7 @@ async function search() {
   }).then((response) => response.json());
 
   if (album.name) {
-    const album_cover_update = `\n<a href=${album.url}><img class="album cover" src="${album.cover}" alt="${album.name}"></a>`;
+    const album_cover_update = `\n<a href=${album.url}><img class="album cover" src="${album.image}" alt="${album.name}"></a>`;
     document.getElementById("album_cover").innerHTML = album_cover_update + "\n";
 
     let current_date = `${new Date().getMonth() + 1}/${new Date().getDate()}`;

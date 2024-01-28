@@ -8,14 +8,12 @@ const redirect_uri = process.env.redirect_uri;
 
 let pasipo = null;
 
-// Uses Spotify api to first find a album result with the given query, returns early with null if no album is found
-// If an album is found, returns a json object of various album data (search_result), which includes an album tracklist
+
 async function albumSearch(album_query){
   if(pasipo == null || pasipo.expiry_time < Math.floor(Date.now() / 1000 )){
     pasipo = await authorize(null);
   }
   
-  // Search for a single album
   const album_response = 
     await fetch(`https://api.spotify.com/v1/search?query=${album_query}&type=album`, 
       { 
@@ -34,24 +32,34 @@ async function albumSearch(album_query){
   album = spotify_albums.albums.items[0];
   
   let artists = [];
-  album.artists.forEach((artist) => artists.push({"name": artist.name, "id": artist.id}))
+  for(const album_artist of album.artists){
+    const artist_response = await fetch(`https://api.spotify.com/v1/artists/${album_artist.id}`,
+    { 
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${pasipo.access_token}`}
+    });
 
-  const genre_response = await 
-    fetch(`https://api.spotify.com/v1/artists/${album.artists[0].id}`,
-      { 
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${pasipo.access_token}`}
-      });
-  genres = (await (await genre_response.json())).genres;
+    spotify_artist = await(await artist_response.json());
+
+    artist_info = {
+      "id": spotify_artist.id,
+      "name": spotify_artist.name,
+      "image": spotify_artist.images[0].url,
+      "url": spotify_artist.external_urls["spotify"],
+      "genres": spotify_artist.genres
+    };
+    artists.push(artist_info);
+  };
 
   spotify_track_list = await tracklist(album.id, pasipo.access_token);
   let track_list = [];
 
   spotify_track_list.forEach((track) => {
     track_info = {
-      "name": track.name,
       "id": track.id,
+      "name": track.name,
+      "url": track.external_urls["spotify"],
       "length": track.duration_ms, 
       "disc": track.disc_number, 
       "number": track.track_number
@@ -60,20 +68,18 @@ async function albumSearch(album_query){
   });
 
   search_result = { 
+      "id": album.id,
       "name": album.name,
-      "id": album.id,  
-      "url": album.external_urls["spotify"], 
-      "cover": album.images[0].url,
-      "popularity": album.popularity,
+      "image": album.images[0].url,
+      "url": album.external_urls["spotify"],
       "artists": artists,
-      "genres": genres,
+      "genres": artists[0].genres,
       "track_list": track_list
   };
-
   return search_result;
 }
 
-// Uses Spotify api to find the first 50 tracks of album_id, then loops through nesting "next" urls if they exist; returns the resulting track_list
+
 async function tracklist(album_id){
   const response = await fetch(`https://api.spotify.com/v1/albums/${album_id}/tracks?limit=50`, 
   {
@@ -83,9 +89,8 @@ async function tracklist(album_id){
     }
   });
 
-  result = await response.json();
-  track_list = [];
-  result.items.forEach((track) => {track_list.push(track)});
+  let result = await response.json();
+  let track_list = result.items;
 
   if(result.next){
     while(result.next){
@@ -95,10 +100,9 @@ async function tracklist(album_id){
             'Authorization': `Bearer ${pasipo.access_token}`}
         });
       result = await response.json();
-      result.items.forEach((track) => {track_list.push(track)});
+      track_list = track_list.concat(result.items);
     }
   }
-
   return track_list;
 }
 

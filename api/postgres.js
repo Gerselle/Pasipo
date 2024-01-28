@@ -1,8 +1,9 @@
 const pg = require('pg');
+const fs = require('fs');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// Make sure the variables here exist in your env file
+// Verify that the pool variables here exist in your env file
 const pool = new pg.Pool({
     user: process.env.pguser,
     host: process.env.pghost,
@@ -11,58 +12,63 @@ const pool = new pg.Pool({
     port: process.env.pgport
 });
 
-// Updates/creates the album table in the database with a new row of album data for album caching 
+// Update init.sql to use different names
+async function initialize(){
+    const client = await pool.connect();
+    const file = fs.readFileSync('api/init.sql').toString();
+    await client.query(file);
+    await client.release();
+}initialize(); // Keep initialize() here or bad things will happen 
+
 async function addAlbum(album){
     const client = await pool.connect();
+    const album_query = 
+      `INSERT INTO album(id, name, image, url, genres)
+       VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`;
+    await client.query(album_query, [album.id, album.name, album.image, album.url, album.genres]);
 
-    const create_table = `
-        CREATE TABLE IF NOT EXISTS album(
-            id VARCHAR(255) PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            url VARCHAR(255),
-            cover VARCHAR(255),
-            popularity INTEGER,
-            artists JSONB[],
-            genres  TEXT[],
-            track_list JSONB[]
-        );`;
-    
-    await client.query(create_table);
+    album.track_list.forEach(async(track) =>{
+        const track_query =
+        `INSERT INTO track(id, album_id, name, url, length, disc, number) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING`;
+        await client.query(track_query, [track.id, album.id, track.name, track.url, track.length, track.disc, track.number]);
+    });
 
-    await client.query(
-        'INSERT INTO album(id, name, url, cover, popularity, artists, genres, track_list) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO NOTHING',
-         [album.id, album.name, album.url, album.cover, album.popularity, album.artists, album.genres, album.track_list]
-    );
+    album.artists.forEach(async(artist) => {
+        const artist_query = 
+            `INSERT INTO artist(id, name, image, url, genres)
+             VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`;        
+        await client.query(artist_query, [artist.id, artist.name, artist.image, artist.url, artist.genres]); 
+
+        const joint_id = artist.id + album.id;   
+        await client.query('INSERT INTO artist_albums(joint_id, artist_id, album_id) VALUES ($1, $2, $3) ON CONFLICT (joint_id) DO NOTHING', [joint_id, artist.id, album.id]);
+    });
 
     await client.release();
 }
 
-// Updates/creates the search_query table with a new row [query, id]
 async function addQuery(album_query, album_id){
     const client = await pool.connect();
-
-    const create_table = `
-        CREATE TABLE IF NOT EXISTS search_query(
-            query VARCHAR(255) PRIMARY KEY,
-            id VARCHAR(255)
-    );`;
-
-    await client.query(create_table);
-    await client.query('INSERT INTO search_query(query, id) VALUES ($1, $2) ON CONFLICT (query) DO NOTHING', [album_query, album_id])
+    await client.query('INSERT INTO album_search(query, album_id) VALUES ($1, $2) ON CONFLICT (query) DO NOTHING', [album_query, album_id])
     await client.release();
 }
 
-// If the query already exists in the database, return the album that its linked to, else return null
-// Given album_query and queries in the database currently need to match exactly to return an album
 async function checkQuery(album_query){
     const client = await pool.connect();
     try{    
-        const check = await client.query('SELECT * FROM search_query WHERE query = $1', [album_query]);
-        const album_id = check.rows[0].id;
-        album = await client.query(`SELECT * FROM album WHERE id = $1`, [album_id]);
+        const album_id = (await client.query('SELECT * FROM album_search WHERE query = $1', [album_query])).rows[0].album_id;
+        album = (await client.query(`SELECT * FROM album WHERE id = $1`, [album_id])).rows[0];
+        const artist_query = 
+          `SELECT artist.*
+           FROM artist
+           JOIN artist_albums ON artist.id = artist_albums.artist_id
+           WHERE artist_albums.album_id = $1`;
+        album["artists"] = (await client.query(artist_query, [album_id])).rows;
+        album["track_list"] = tracklist = (await client.query(`SELECT * FROM track WHERE album_id = $1`, [album_id])).rows;
         await client.release();
-        return album.rows[0];
+        return album;
     }catch(error){
+        console.log(error);
         await client.release();
         return null;
     }

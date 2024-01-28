@@ -4,6 +4,7 @@
         "pghost",
         "pgpassword",
         "pgport",
-        "pguser"
+        "pguser",
+        "salthash"
     ]
 }
