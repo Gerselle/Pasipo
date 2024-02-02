@@ -1,11 +1,12 @@
-const port = 45426;
+const SERVER_IP = "172.29.148.150:45426";
+
 // Login.html
 const login = document.getElementById("login_button");
 
 // Login button
 if (login) {
   login.addEventListener("click", function () {
-    fetch(`http://localhost:${port}/login`)
+    fetch(`http://${SERVER_IP}/login`)
       .then((response) => response.text())
       .then((html) => {
         document.body.innerHTML = html;
@@ -27,7 +28,7 @@ if (album_search) {
 }
 
 async function search() {
-  album = await fetch(`http://localhost:${port}/search`, {
+  album = await fetch(`http://${SERVER_IP}/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ album_query: album_query.value }),
