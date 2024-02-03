@@ -17,10 +17,10 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + "/public/search.html");
 });
 
-app.get('/callback', (req, res) => {
+app.get('/callback', async function(req, res){
   if(req.query.code){
     // Add this user's token to the database
-    user = spotify.authorize(req.query.code);
+    user = await spotify.authorize(req.query.code);
   }
   res.redirect("/");
 });

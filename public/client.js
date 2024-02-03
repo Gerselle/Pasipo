@@ -1,4 +1,20 @@
-const SERVER_IP = "172.29.148.150:45426";
+const SERVER_IP = "172.29.148.150";
+const NODE_PORT = ":45426";
+const TS_PORT = "8108";
+const TS_KEY = "3jwW1SNDoqkmlxxtOUnvknUNYanh7S4h4TrKCE2791ydg1ep";
+let TS_OPEN = true;
+
+let client = new Typesense.Client({
+  'nodes': [{
+    'host': SERVER_IP, 
+    'port': TS_PORT,      
+    'protocol': 'http'  
+  }],
+  'apiKey': TS_KEY,
+  'connectionTimeoutSeconds': 2
+})
+
+let presearch;
 
 // Login.html
 const login = document.getElementById("login_button");
@@ -6,7 +22,7 @@ const login = document.getElementById("login_button");
 // Login button
 if (login) {
   login.addEventListener("click", function () {
-    fetch(`http://${SERVER_IP}/login`)
+    fetch(`http://${SERVER_IP + NODE_PORT}/login`)
       .then((response) => response.text())
       .then((html) => {
         document.body.innerHTML = html;
@@ -16,22 +32,65 @@ if (login) {
 }
 
 // Search html
-const album_search = document.getElementById("album_search");
-if (album_search) {
-  const album_query = document.getElementById("album_query");
-  album_query.addEventListener("keyup", (event) => {
-    if (event.key == "Enter") {
-      search();
+const album_search = document.getElementById("search_button");
+const album_query = document.getElementById("search_bar");
+const search_results = document.getElementById("search_results");
+album_query.addEventListener("keyup", searchInput);
+album_search.addEventListener("click", getAlbum);
+
+
+async function searchInput(event){
+  if(event.key == "Enter"){
+    getAlbum();
+  }else{
+    if(album_query.value.length > 1){
+      await searchAlbum();
+    }else{
+      search_results.innerHTML = "";
     }
-  });
-  album_search.addEventListener("click", search);
+  }
 }
 
-async function search() {
-  album = await fetch(`http://${SERVER_IP}/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ album_query: album_query.value }),
+async function searchAlbum(){
+  if(TS_OPEN){
+    TS_OPEN = false;
+
+    const query = {
+      'q'         : album_query.value,
+      'query_by'  : 'name,artists.name,track_list.name,aliases',
+      'pre_segmented_query': true,
+      'drop_tokens_threshold': 0
+    }
+
+    
+    let query_result = await client.collections('albums').documents().search(query)
+                                   .catch(e => {});
+  
+    presearch = [];
+
+    if(query_result.hits.length != 0){
+      let results = "";
+      for(let i = 0; i < query_result.hits.length; i++){
+        if(i == 10){
+          break;
+        }
+        album = query_result.hits[i].document;
+        presearch.push(album);
+        results += `\t<li>${album.name} by ${album.artists[0].name}</li>\n`
+      }
+      console.log(results)
+      search_results.innerHTML = results;
+    }
+
+    TS_OPEN = true;
+  }
+}
+
+async function getAlbum() {
+  album = await fetch(`http://${SERVER_IP + NODE_PORT}/search`, {
+    'method': "POST",
+    'headers': { "Content-Type": "application/json" },
+    'body': JSON.stringify({ "album_query": album_query.value })
   }).then((response) => response.json());
 
   if (album.name) {

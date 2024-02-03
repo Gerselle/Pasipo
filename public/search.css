@@ -11,37 +11,106 @@
   --bg-300:#3d3f5b;
 }
 
+*{
+  margin: 0;
+  padding: 0;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+}
 
 body {
   background-color: var(--bg-100);
+}
+
+.title{
+  text-align: center;
+}
+
+.search-box{ 
+  flex-grow: 1;
+  width: 75vw;
+  background: var(--bg-200);
+  margin: 10vw auto 0;
+  margin-top: 10px;
+}
+
+.row{
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+input{
+  flex-grow: 1;
+  height: 50px;
+  font-size: large;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--text-100);
+}
+
+button{
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+button .fa-solid{
+  width: 20px;
+  color: var(--accent-100);
+  font-size: 25px;
+  cursor: pointer;
+}
+
+::placeholder{
+  color: var(--text-200);
+}
+
+.search-box ul{
+  opacity: 0.95;
+  width: 75vw;
+  z-index: 1;
+  position: absolute;
+  border-top: 2px solid var(--bg-100);
+  padding: 0px, 10px;
+  background: var(--bg-300);
+}
+
+.search-box ul li{
+  list-style: none;
+  border-radius: 3px;
+  padding: 10px;
+  cursor: pointer;
 }
 
 .title {
   color: var(--primary-300);
   justify-content: center;
 }
+
 label {
   color: var(--text-100);
 }
 
-.layout{
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-}
-
 .album{
-  width: 33vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 5vw auto 0;
+  margin-top: 1vw;
+  justify-content: space-around;
+  width: 75vw;
 }
 
 .album .record{
-  scale: 95%;
+  width: 5vw;
   animation: rotate-cover 0.75s linear infinite;
 }
 
 .album .cover{
   border-radius: 50%;
+  width: 500px;
 }
 
 .album .sleeve{
@@ -49,19 +118,20 @@ label {
   
 }
 
-.layout table {
-  display: white;
+.album table {
+  display: flex;
+  flex-grow: 1;
   font-size: large;
 }
 
-.layout table th{
+.album table th{
   color: var(--primary-200);
-  font-size: 2rem;
+  font-size: clamp(12px, 3vh, 100px);
 }
 
-.layout table td{
+.album table td{
   color: var(--text-100);
-  font-size: 1rem;
+  font-size: clamp(10px, 1.5vh, 100px);
 }
 
 @keyframes rotate-cover {

@@ -7,21 +7,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="title_bar">Pasipo</title>
     <script src="/client.js" defer></script>
+    <script src="https://kit.fontawesome.com/a48976f73c.js" crossorigin="anonymous"></script>
+    <script src="/typesense.min.js"></script>
 </head>
 
 <body>
-
+  <div class="album"> 
     <h1 class="title">Album Tracklist Finder</h1>
-    <label for="album_query">Search for an album here:</label>
-    <input type="text" id="album_query">
-    <button id= "album_search" type="button">Search</button>
-    <div class="layout">      
-      <div class = "album" id= "album_cover">
-        <img id="album_cover" class="album cover" src="" alt="" href="">
-      </div>             
-      <table id="album_table"></table>
+    
+    <div class="search-box">
+      <div class="row">
+          <input type="text" id="search_bar" placeholder="Search for album..." autocomplete="off">
+          <button id= "search_button" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </div>
+      <ul class="search-results" id="search_results">
 
+      </ul>
+      
     </div>
-
+      <div class="album cover" id="album_cover"> 
+          <a href=""><img class="" src="" alt=""></a>
+      </div>             
+          <table id="album_table">
+          </table>
+  </div>
 </body>
 </html>

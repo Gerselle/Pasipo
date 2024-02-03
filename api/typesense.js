@@ -42,7 +42,7 @@ async function addAlbum(album, query){
 async function query(album_query){
   const query = {
     'q'         : album_query,
-    'query_by'  : 'name, artists.name, track_list.name, aliases',
+    'query_by'  : 'name,artists.name,track_list.name,aliases',
     'pre_segmented_query': true,
     'drop_tokens_threshold': 0
   }
