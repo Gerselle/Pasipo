@@ -37,7 +37,7 @@ const album_query = document.getElementById("search_bar");
 const search_results = document.getElementById("search_results");
 album_query.addEventListener("keyup", searchInput);
 album_search.addEventListener("click", getAlbum);
-
+search_results.addEventListener("click", getAlbum);
 
 async function searchInput(event){
   if(event.key == "Enter"){
@@ -62,12 +62,9 @@ async function searchAlbum(){
       'drop_tokens_threshold': 0
     }
 
-    
     let query_result = await client.collections('albums').documents().search(query)
                                    .catch(e => {});
-  
-    presearch = [];
-
+    presearch = {};
     if(query_result.hits.length != 0){
       let results = "";
       for(let i = 0; i < query_result.hits.length; i++){
@@ -75,10 +72,9 @@ async function searchAlbum(){
           break;
         }
         album = query_result.hits[i].document;
-        presearch.push(album);
-        results += `\t<li>${album.name} by ${album.artists[0].name}</li>\n`
+        presearch["ps" + i] = album;
+        results += `\t<li id=${"ps" + i}>${album.name} by ${album.artists[0].name}</li>\n`
       }
-      console.log(results)
       search_results.innerHTML = results;
     }
 
@@ -86,14 +82,19 @@ async function searchAlbum(){
   }
 }
 
-async function getAlbum() {
-  album = await fetch(`http://${SERVER_IP + NODE_PORT}/search`, {
-    'method': "POST",
-    'headers': { "Content-Type": "application/json" },
-    'body': JSON.stringify({ "album_query": album_query.value })
-  }).then((response) => response.json());
+async function getAlbum(event = null, album = {name: null}) {
+  if(event){
+    let result = event.target;
+    album = presearch[result.id];
+  }else{
+    album = await fetch(`http://${SERVER_IP + NODE_PORT}/search`, {
+      'method': "POST",
+      'headers': { "Content-Type": "application/json" },
+      'body': JSON.stringify({ "album_query": album_query.value })
+    }).then((response) => response.json());
+  }
 
-  if (album.name) {
+  if(album.name) {
     const album_cover_update = `\n<a href=${album.url}><img class="album cover" src="${album.image}" alt="${album.name}"></a>`;
     document.getElementById("album_cover").innerHTML = album_cover_update + "\n";
 

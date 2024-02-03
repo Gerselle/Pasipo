@@ -41,8 +41,8 @@ async function getTracklist(album_id){
     }
   });
 
-  const result = await response.json();
-  const spotify_track_list = result.items;
+  let result = await response.json();
+  let spotify_track_list = result.items;
 
   // Grabbing other tracks with "next" urls if tracklist has more than 50 tracks
   if(result.next){
