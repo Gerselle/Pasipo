@@ -86,24 +86,26 @@ async function albumSearch(album_query){
           'Authorization': `Bearer ${pasipo.access_token}`}
       });
 
-  spotify_albums = await(await album_response.json());
+  spotify_response = await(await album_response.json());
 
   // Empty query response
-  if(spotify_albums.error){ 
+  if(spotify_response.error){ 
     return null;
   }
 
+  spotify_albums = spotify_response.albums;
+
   let album;
-  for(let i = 0; i <= spotify_albums.albums.total; i++){
+  for(let i = 0; i <= spotify_albums.total; i++){
     
     // Exit if no albums or all albums have less than 6 tracks 
-    if(i == spotify_albums.albums.total){
+    if(i == spotify_albums.total){
       return null;
     }    
 
     // Take first album with 6 or more tracks
-    if(spotify_albums.albums.items[i].total_tracks > 5){
-      album = spotify_albums.albums.items[i];
+    if(spotify_albums.items[i].total_tracks > 5){
+      album = spotify_albums.items[i];
       break;
     }
   }
