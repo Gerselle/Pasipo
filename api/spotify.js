@@ -121,7 +121,7 @@ async function albumSearch(album_query){
       'artists': artists,
       'genres': artists[0].genres,
       'track_list': track_list,
-      'aliases': []
+      'aliases': [album_query]
   };
   return search_result;
 }
