@@ -54,7 +54,7 @@ async function searchInput(event){
 async function searchAlbum(){
   if(TS_OPEN){
     TS_OPEN = false;
-
+    console.time("timer1")
     const query = {
       'q'         : album_query.value,
       'query_by'  : 'name,artists.name,track_list.name,aliases',
@@ -77,15 +77,20 @@ async function searchAlbum(){
       }
       search_results.innerHTML = results;
     }
-
+    console.timeEnd("timer1")
     TS_OPEN = true;
   }
 }
 
-async function getAlbum(event = null, album = {name: null}) {
+async function getAlbum(event = null, album = {url: null}) {
+
+  // Clear search suggestions
+  search_results.innerHTML = "";
+
   if(event){
     let result = event.target;
-    album = presearch[result.id];
+    if(presearch.length > 0)
+      album = presearch[result.id];
   }else{
     album = await fetch(`http://${SERVER_IP + NODE_PORT}/search`, {
       'method': "POST",
@@ -94,25 +99,29 @@ async function getAlbum(event = null, album = {name: null}) {
     }).then((response) => response.json());
   }
 
-  if(album.name) {
-    const album_cover_update = `\n<a href=${album.url}><img class="album cover" src="${album.image}" alt="${album.name}"></a>`;
-    document.getElementById("album_cover").innerHTML = album_cover_update + "\n";
+  let cover = document.getElementById("album_cover");
 
-    let current_date = `${new Date().getMonth() + 1}/${new Date().getDate()}`;
-    let album_table_update = 
-      `\n<tr><th colspan="3"><center>
-      ${current_date} - 
-      ${album.name} - <b>
-      ${album.artists[0].name}</b> - <i>
-      ${album.genres.slice(0,3).join(", ")}
-      </i></center></th></tr>`;
-
-    for (let i = 0; i < album.track_list.length; i++) {
-      album_table_update += `\n<tr><td>${i + 1}</td><td>${album.track_list[i].name}</td></tr>`;
-    }
-
-    document.getElementById("album_table").innerHTML = album_table_update + "\n";
-  } else {
+  if(album.url == null || album.url == cover.href){
     alert("Error in finding album");
+    return;
   }
+
+  const album_cover_update = `\n<a href=${album.url}><img class="album cover" src="${album.image}" alt="${album.name}"></a>`;
+  cover.innerHTML = album_cover_update + "\n";
+
+  let current_date = `${new Date().getMonth() + 1}/${new Date().getDate()}`;
+  let album_table_update = 
+    `\n<tr><th colspan="3">
+    ${current_date} - 
+    ${album.name} - <b>
+    ${album.artists[0].name}</b> - <i>
+    ${album.genres.slice(0,3).join(", ")}
+    </i></th></tr>`;
+
+  for (let i = 0; i < album.track_list.length; i++) {
+    album_table_update += `\n<tr><td>${i + 1}</td><td>${album.track_list[i].name}</td></tr>`;
+  }
+
+  document.getElementById("album_table").innerHTML = album_table_update + "\n";
+
 }

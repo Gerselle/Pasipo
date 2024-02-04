@@ -22,16 +22,24 @@ body {
   background-color: var(--bg-100);
 }
 
-.title{
-  text-align: center;
+.layout{
+  display: flex;
+  flex-direction: column;
 }
 
 .search-box{ 
   flex-grow: 1;
+  align-items: center;
   width: 75vw;
   background: var(--bg-200);
   margin: 10vw auto 0;
   margin-top: 10px;
+}
+
+.title {
+  color: var(--primary-200);
+  background: var(--bg-100);
+  text-align: center;
 }
 
 .row{
@@ -48,6 +56,7 @@ input{
   border: 0;
   outline: 0;
   color: var(--text-100);
+  font-size: x-large;
 }
 
 button{
@@ -82,11 +91,7 @@ button .fa-solid{
   border-radius: 3px;
   padding: 10px;
   cursor: pointer;
-}
-
-.title {
-  color: var(--primary-300);
-  justify-content: center;
+  font-size: large;
 }
 
 label {
@@ -95,49 +100,43 @@ label {
 
 .album{
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  margin: 5vw auto 0;
-  margin-top: 1vw;
-  justify-content: space-around;
-  width: 75vw;
-}
-
-.album .record{
-  width: 5vw;
-  animation: rotate-cover 0.75s linear infinite;
+  justify-content: space-evenly;
+  margin: 3vw;
+  margin-top: 10px;
+  width: 90vw;
 }
 
 .album .cover{
   border-radius: 50%;
-  width: 500px;
-}
-
-.album .sleeve{
-  position: absolute;
-  
-}
-
-.album table {
-  display: flex;
-  flex-grow: 1;
-  font-size: large;
+  width: 30vw;
 }
 
 .album table th{
-  color: var(--primary-200);
-  font-size: clamp(12px, 3vh, 100px);
+  color: var(--text-100);
+  font-size: clamp(12px, 3vw, 25px);
 }
 
 .album table td{
-  color: var(--text-100);
-  font-size: clamp(10px, 1.5vh, 100px);
+  color: var(--text-200);
+  font-size: clamp(10px, 1.5vw, 20px);
 }
 
-@keyframes rotate-cover {
-  from{
-    transform: rotate(0deg);
-  }to{
-    transform: rotate(360deg);
+@media (max-aspect-ratio: 1) {
+  .album{
+    flex-direction: column;
   }
+  .album .cover{
+    width: 30vh;
+  } 
+
+  .album table th{
+    font-size: clamp(12px, 3vh, 50px);
+  }
+  
+  .album table td{
+    font-size: clamp(10px, 1.5vh, 30px);
+  }
+  
 }

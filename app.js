@@ -42,7 +42,7 @@ app.post('/search', async function(req, res){
       typesense.addAlbum(search_response, query);
       postgres.addAlbum(search_response);
     }else{
-      res.send({name: null});
+      res.send({url: null});
     }
   }
 });
