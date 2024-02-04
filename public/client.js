@@ -38,23 +38,31 @@ const search_results = document.getElementById("search_results");
 album_query.addEventListener("keyup", searchInput);
 album_search.addEventListener("click", getAlbum);
 search_results.addEventListener("click", getAlbum);
+const async_debounce = debounce(async () => searchAlbum(), 100);
 
 async function searchInput(event){
   if(event.key == "Enter"){
     getAlbum();
   }else{
     if(album_query.value.length > 0){
-      await searchAlbum();
+      async_debounce();
     }else{
       search_results.innerHTML = "";
     }
   }
 }
 
+function debounce(func, timeout) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func.apply(this, args);
+    }, timeout);
+  };
+}
+
 async function searchAlbum(){
-  if(TS_OPEN){
-    TS_OPEN = false;
-    console.time("timer1")
     const query = {
       'q'         : album_query.value,
       'query_by'  : 'name,artists.name,track_list.name,aliases',
@@ -67,9 +75,11 @@ async function searchAlbum(){
     presearch = [];
 
     if(!query_result) return;
+    
+    let results = "";
 
     if(query_result.hits.length != 0){
-      let results = "";
+      
       for(let i = 0; i < query_result.hits.length; i++){
         if(i == 10){
           break;
@@ -77,12 +87,10 @@ async function searchAlbum(){
         album = query_result.hits[i].document;
         presearch[i] = album;
         results += `\t<li id=${ i}>${album.name} by ${album.artists[0].name}</li>\n`
-      }
-      search_results.innerHTML = results;
+      }  
     }
-    console.timeEnd("timer1")
-    TS_OPEN = true;
-  }
+
+    search_results.innerHTML = results;
 }
 
 async function getAlbum(event = null, album = {url: null}) {
