@@ -1,17 +1,22 @@
+// Modules for node express requests/responses
 const express = require('express');
+const cors = require('cors');
 const body_parser = require('body-parser');
+const path = require("path");
+
+// Module for .env variables
 const dotenv = require('dotenv');
+
+// Custom modules for Pasipo functionality 
 const spotify = require('./api/spotify.js');
 const postgres = require('./api/postgres.js');
 const typesense = require('./api/typesense.js');
 
 const app = express();
-const path = require("path");
 app.use(express.static(path.join(__dirname, 'public'), { index : false }));
+app.use(cors());
 app.use(body_parser.json());
 dotenv.config();
-
-const port = process.env.server_port;
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + "/public/search.html");
@@ -47,4 +52,6 @@ app.post('/search', async function(req, res){
   }
 });
 
-app.listen(port, () => console.log(`Listening on port ${port}.`));
+const ip = process.env.server_ip;
+const port = process.env.server_port;
+app.listen(port, '0.0.0.0', () => console.log(`Listening at address ${process.env.server_ip} on port ${port}.`));

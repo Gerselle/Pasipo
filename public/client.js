@@ -1,4 +1,4 @@
-const SERVER_IP = "172.29.148.150";
+const SERVER_IP = "104.231.13.6";
 const NODE_PORT = ":45426";
 const TS_PORT = "8108";
 const TS_KEY = "3jwW1SNDoqkmlxxtOUnvknUNYanh7S4h4TrKCE2791ydg1ep";
@@ -43,7 +43,7 @@ async function searchInput(event){
   if(event.key == "Enter"){
     getAlbum();
   }else{
-    if(album_query.value.length > 1){
+    if(album_query.value.length > 0){
       await searchAlbum();
     }else{
       search_results.innerHTML = "";
@@ -64,7 +64,10 @@ async function searchAlbum(){
 
     let query_result = await client.collections('albums').documents().search(query)
                                    .catch(e => {});
-    presearch = {};
+    presearch = [];
+
+    if(!query_result) return;
+
     if(query_result.hits.length != 0){
       let results = "";
       for(let i = 0; i < query_result.hits.length; i++){
@@ -72,8 +75,8 @@ async function searchAlbum(){
           break;
         }
         album = query_result.hits[i].document;
-        presearch["ps" + i] = album;
-        results += `\t<li id=${"ps" + i}>${album.name} by ${album.artists[0].name}</li>\n`
+        presearch[i] = album;
+        results += `\t<li id=${ i}>${album.name} by ${album.artists[0].name}</li>\n`
       }
       search_results.innerHTML = results;
     }
@@ -87,10 +90,8 @@ async function getAlbum(event = null, album = {url: null}) {
   // Clear search suggestions
   search_results.innerHTML = "";
 
-  if(event){
-    let result = event.target;
-    if(presearch.length > 0)
-      album = presearch[result.id];
+  if(event && event.target.nodeName === "LI"){
+    album = presearch[event.target.id];
   }else{
     album = await fetch(`http://${SERVER_IP + NODE_PORT}/search`, {
       'method': "POST",

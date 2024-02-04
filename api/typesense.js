@@ -48,8 +48,10 @@ async function query(album_query){
   }
 
   let query_result = await client.collections('albums').documents().search(query)
-                              .catch(e => {return null});
-  
+                                 .catch(e => {});
+
+  if(!query_result) return                              
+                              
   if(query_result.hits.length != 0){
     let response = [];
     for (const hit of query_result.hits){
