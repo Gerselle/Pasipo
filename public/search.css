@@ -12,13 +12,13 @@
 }
 
 *{
-  margin: 0;
-  padding: 0;
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding:0px;
+  margin: 0px;
   box-sizing: border-box;
 }
 
 body {
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: var(--bg-100);
 }
 
@@ -27,19 +27,13 @@ body {
   flex-direction: column;
 }
 
-.search-box{ 
-  flex-grow: 1;
+.search-box{
+  margin-left: auto;
+  margin-right: auto;
   align-items: center;
-  width: 75vw;
+  width: 90dvw;
   background: var(--bg-200);
-  margin: 10vw auto 0;
   margin-top: 10px;
-}
-
-.title {
-  color: var(--primary-200);
-  background: var(--bg-100);
-  text-align: center;
 }
 
 .row{
@@ -78,15 +72,13 @@ button .fa-solid{
 
 .search-box ul{
   opacity: 0.95;
-  width: 75vw;
   z-index: 1;
   position: absolute;
-  border-top: 2px solid var(--bg-100);
-  padding: 0px, 10px;
   background: var(--bg-300);
 }
 
 .search-box ul li{
+  width: 90dvw;
   list-style: none;
   border-radius: 3px;
   padding: 10px;
@@ -99,44 +91,59 @@ label {
 }
 
 .album{
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1dvh;
   display: flex;
   flex-direction: row;
-  align-items: center;
   justify-content: space-evenly;
-  margin: 3vw;
-  margin-top: 10px;
-  width: 90vw;
+  width: 90dvw;
 }
 
 .album .cover{
   border-radius: 50%;
-  width: 30vw;
+  width: 30dvw;
+}
+
+.album table{
+  display: block;
+  height: 70dvh;
+  overflow-y: auto;
+  background-color: var(--bg-100);
 }
 
 .album table th{
+  position: sticky;
+  top: 0px;
+  background-color: var(--bg-100);
   color: var(--text-100);
-  font-size: clamp(12px, 3vw, 25px);
+  font-size: clamp(12px, 3dvw, 25px);
 }
 
 .album table td{
   color: var(--text-200);
-  font-size: clamp(10px, 1.5vw, 20px);
+  font-size: clamp(10px, 1.5dvw, 20px);
 }
 
 @media (max-aspect-ratio: 1) {
   .album{
     flex-direction: column;
+    align-items: center;
   }
   .album .cover{
-    width: 30vh;
+    width: 30dvh;
   } 
 
+  .album table{
+    height: 60dvh;
+  }
+
   .album table th{
-    font-size: clamp(12px, 3vh, 50px);
+    font-size: clamp(12px, 3dvh, 50px);
   }
   
   .album table td{
-    font-size: clamp(10px, 1.5vh, 30px);
+    font-size: clamp(10px, 1.5dvh, 30px);
   }
   
 }

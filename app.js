@@ -1,6 +1,5 @@
 // Modules for node express requests/responses
 const express = require('express');
-const cors = require('cors');
 const body_parser = require('body-parser');
 const path = require("path");
 
