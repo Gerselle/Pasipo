@@ -2,6 +2,7 @@
 const express = require('express');
 const body_parser = require('body-parser');
 const path = require("path");
+const cors = require('cors');
 
 // Module for .env variables
 const dotenv = require('dotenv');
@@ -12,13 +13,13 @@ const postgres = require('./api/postgres.js');
 const typesense = require('./api/typesense.js');
 
 const app = express();
-app.use(express.static(path.join(__dirname, 'public'), { index : false }));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(body_parser.json());
 dotenv.config();
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + "/public/search.html");
+app.get('/*', (req, res) => {
+  res.sendFile(__dirname + "/public/index.html");
 });
 
 app.get('/callback', async function(req, res){
@@ -51,6 +52,5 @@ app.post('/search', async function(req, res){
   }
 });
 
-const ip = process.env.server_ip;
 const port = process.env.server_port;
 app.listen(port, '0.0.0.0', () => console.log(`Listening at address ${process.env.server_ip} on port ${port}.`));

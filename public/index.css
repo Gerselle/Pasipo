@@ -22,6 +22,56 @@ body {
   background-color: var(--bg-100);
 }
 
+.background-blur{
+  display: flex;
+  position: absolute;
+  width: 100dvw;
+  height: 100dvh;
+  background: rgb(0, 0, 0, 0.25);
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+}
+
+.access{
+  width: 00px;
+  min-width: fit-content;
+  background: var(--bg-200);
+  border-radius: 25px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.access input[type="text"]{
+  width: 350px;
+  height: 50px;
+  background: var(--bg-300);
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
+  border: 0;
+  color: var(--text-100);
+  font-size: x-large;
+}
+
+.access button{
+  color: var(--bg-300);
+  background: var(--accent-100);
+  height: 25px;
+  width: 75px;
+  border-radius: 20px;
+}
+
+b{
+  color: var(--text-100);
+}
+
+a{
+  color: var(--primary-200);
+  text-decoration: none;
+}
+
 .layout{
   display: flex;
   flex-direction: column;
@@ -32,14 +82,17 @@ body {
   margin-right: auto;
   align-items: center;
   width: 90dvw;
+  min-width: fit-content;
   background: var(--bg-200);
   margin-top: 10px;
+  border-radius: 25px;
 }
 
 .row{
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  margin: 15px;
+  justify-content: space-between;
 }
 
 input{
@@ -73,7 +126,6 @@ button .fa-solid{
 .search-box ul{
   opacity: 0.95;
   z-index: 1;
-  position: absolute;
   background: var(--bg-300);
 }
 

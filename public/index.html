@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<link rel="stylesheet" href="search.css"> 
+<link rel="stylesheet" href="index.css"> 
 <html lang="en">
 
 <head>
@@ -12,8 +12,19 @@
 </head>
 
 <body>
+
   <div class="layout"> 
-    
+    <div class= "background-blur">
+      <div class="access">
+              <input id="user_name" type="text"  placeholder="Username"></input>
+              <input id="pass_word" type="text"  placeholder="Password"></input>
+              <div class="row">
+                  <button id="login_button" type="button">Login</button>
+                  <b>Need an account? <a href="/signup">Sign Up</a></b>
+              </div>
+      </div>
+    </div>
+
     <div class="search-box">
       <div class="row">
           <input type="text" id="search_bar" placeholder="Get one here..." autocomplete="off">
@@ -30,6 +41,7 @@
       <table id="album_table">
       </table>
     </div>
+    
   </div>
 </body>
 </html>
