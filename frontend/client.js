@@ -1,34 +1,46 @@
-const SERVER_IP = "104.231.13.6";
+const SERVER_ADDRESS = "104.231.13.6";
 const NODE_PORT = ":45426";
 const TS_PORT = "8108";
 const TS_KEY = "3jwW1SNDoqkmlxxtOUnvknUNYanh7S4h4TrKCE2791ydg1ep";
 let TS_OPEN = true;
+let presearch;
 
 let client = new Typesense.Client({
   'nodes': [{
-    'host': SERVER_IP, 
-    'port': TS_PORT,      
+    'host': SERVER_ADDRESS,
+    'port': TS_PORT,    
     'protocol': 'http'  
   }],
   'apiKey': TS_KEY,
   'connectionTimeoutSeconds': 2
 })
 
-let presearch;
+const profile = document.getElementById("profile");
+const background = document.getElementById("background_blur");
+profile.addEventListener("click", () => {
+  background.style.display = background.style.display === "none" ? "flex" : "none";
+})
 
-// Login.html
-const login = document.getElementById("login_button");
+const access_button = document.getElementById("access")
+access_button.addEventListener("click", access);
 
-// Login button
-if (login) {
-  login.addEventListener("click", function () {
-    fetch(`http://${SERVER_IP + NODE_PORT}/login`)
-      .then((response) => response.text())
-      .then((html) => {
-        document.body.innerHTML = html;
-      })
-      .catch((error) => console.error("Error fetching new page:", error));
-  });
+async function access(event){
+
+  access_request = {
+    'value': event.target.value,
+    'user_name': document.getElementById("user_name").value,
+    'pass_word': document.getElementById("pass_word").value
+  }
+
+  if(event.target.value === "signup"){
+    access_request['pass_confirm'] = document.getElementById("pass_confirm").value;;
+  } 
+  
+  user_data = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/access`, {
+    'method': "POST",
+    'headers': { "Content-Type": "application/json" },
+    'body': JSON.stringify(access_request)
+  }).then((response) => response.json());
 }
 
 // Search html
@@ -38,14 +50,14 @@ const search_results = document.getElementById("search_results");
 album_query.addEventListener("keyup", searchInput);
 album_search.addEventListener("click", getAlbum);
 search_results.addEventListener("click", getAlbum);
-const async_debounce = debounce(async () => searchAlbum(), 100);
+const debounced_search = debounce(async () => searchAlbum(), 100);
 
 async function searchInput(event){
   if(event.key == "Enter"){
     getAlbum();
   }else{
     if(album_query.value.length > 0){
-      async_debounce();
+      debounced_search();
     }else{
       search_results.innerHTML = "";
     }
@@ -101,7 +113,7 @@ async function getAlbum(event = null, album = {url: null}) {
   if(event && event.target.nodeName === "LI"){
     album = presearch[event.target.id];
   }else{
-    album = await fetch(`http://${SERVER_IP + NODE_PORT}/search`, {
+    album = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/search`, {
       'method': "POST",
       'headers': { "Content-Type": "application/json" },
       'body': JSON.stringify({ "album_query": album_query.value })

@@ -6,6 +6,7 @@ const cors = require('cors');
 
 // Module for .env variables
 const dotenv = require('dotenv');
+dotenv.config();
 
 // Custom modules for Pasipo functionality 
 const spotify = require('./api/spotify.js');
@@ -13,13 +14,12 @@ const postgres = require('./api/postgres.js');
 const typesense = require('./api/typesense.js');
 
 const app = express();
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(body_parser.json());
-dotenv.config();
+app.use(express.static(path.join(__dirname, 'frontend'), {index: false}));
 
 app.get('/*', (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
+  res.sendFile(__dirname + "/frontend/index.html");
 });
 
 app.get('/callback', async function(req, res){
@@ -30,8 +30,16 @@ app.get('/callback', async function(req, res){
   res.redirect("/");
 });
 
-app.get('/login', function(req, res) {
+app.get('/spotify', function(req, res) {
   res.redirect(process.env.authorization_request);
+});
+
+app.get('/access', function(req, res) {
+  if(req.pass_confirm){
+
+  }else{
+    res.send({})
+  }
 });
 
 app.post('/search', async function(req, res){

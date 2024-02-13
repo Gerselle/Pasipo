@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="index.css"> 
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="title_bar">Pasipo</title>
+    <script src="/client.js" defer></script>
+    <script src="/router.js" defer></script>
+    <script src="/typesense.min.js"></script>
+</head>
+
+<body>
+<div class="background-blur" id="background_blur" style="display: none">
+  <div class="access" id="access">
+    <input id="user_name" type="text" placeholder="Username">
+    <input id="pass_word" type="password" placeholder="Password">
+    <input id="pass_confirm" type="password" placeholder="Confirm Password" style="visibility:hidden">
+    <button id="access_button" type="button" value="login">Login</button>
+    <b>Need an account? <a href="/signup">Sign Up</a></b>
+  </div>
+</div>
+  
+<div class="top_bar" id="top_bar">
+  <div class="menu" id="menu">
+    <button>Menu</button>
+  </div>
+  <div class="search">
+    <div class="row">
+        <input type="text" id="search_bar" placeholder="Get one here..." autocomplete="off">
+        <button id="search_button" type="button"><img src="/images/search.svg"/></button>
+    </div>
+    <ul class="search-results" id="search_results">
+    </ul>
+  </div>
+  <div class="profile" id="profile">
+      <button>Profile</button>
+  </div>
+</div>
+
+<div class="content" id="content">
+  <div class="album">
+    <div class="album-cover" id="album_cover">
+      <a href=""><img class="album cover" src="" alt=""></a>
+    </div>             
+    <table id="album_table">
+    </table>
+  </div>
+</div>
+</body>
+</html>

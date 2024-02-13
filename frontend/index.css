@@ -22,28 +22,16 @@ body {
   background-color: var(--bg-100);
 }
 
-.background-blur{
-  display: flex;
-  position: absolute;
-  width: 100dvw;
-  height: 100dvh;
-  background: rgb(0, 0, 0, 0.25);
-  align-items: center;
-  justify-content: center;
-  visibility: hidden;
-}
-
 .access{
-  width: 00px;
-  min-width: fit-content;
+  display: grid;
+  min-width: 100px;
   background: var(--bg-200);
   border-radius: 25px;
-  display: flex;
-  flex-direction: column;
   padding: 10px;
 }
 
-.access input[type="text"]{
+.access input{
+  grid-column: 1;
   width: 350px;
   height: 50px;
   background: var(--bg-300);
@@ -56,6 +44,9 @@ body {
 }
 
 .access button{
+  margin: 10px;
+  grid-row: 5;
+  grid-column: 1;
   color: var(--bg-300);
   background: var(--accent-100);
   height: 25px;
@@ -64,6 +55,10 @@ body {
 }
 
 b{
+  margin: 10px;
+  grid-row: 5;
+  grid-column: 1;
+  justify-self: end;
   color: var(--text-100);
 }
 
@@ -72,32 +67,58 @@ a{
   text-decoration: none;
 }
 
-.layout{
-  display: flex;
-  flex-direction: column;
+.background-blur{
+  position: absolute;
+  display: none;
+  width: 100dvw;
+  height: 100dvh;
+  background: rgb(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
 }
 
-.search-box{
+.top_bar{
+  display: flex;
+  background: var(--bg-200);
+  align-items: center;  
+}
+
+.profile{
+  z-index: 10;
+}
+
+.menu{
+  width: 50px;
+  height: 50px;
+  background-color: red;
+}
+
+.search{
+  z-index: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px;
   margin-left: auto;
   margin-right: auto;
-  align-items: center;
-  width: 90dvw;
+  background: var(--bg-300);
+  border-radius: 100px;
+  width: 50dvw;
   min-width: fit-content;
-  background: var(--bg-200);
-  margin-top: 10px;
-  border-radius: 25px;
+  max-width: 1000px;
 }
 
 .row{
   display: flex;
-  align-items: center;
+  position: relative;
   margin: 15px;
-  justify-content: space-between;
+  width: 90%;
 }
 
 input{
   flex-grow: 1;
-  height: 50px;
   font-size: large;
   background: transparent;
   border: 0;
@@ -106,16 +127,14 @@ input{
   font-size: x-large;
 }
 
-button{
+.row button{
   background: transparent;
   border: 0;
   outline: 0;
 }
 
-button .fa-solid{
-  width: 20px;
-  color: var(--accent-100);
-  font-size: 25px;
+.row img{
+  width: 25px;
   cursor: pointer;
 }
 
@@ -123,16 +142,19 @@ button .fa-solid{
   color: var(--text-200);
 }
 
-.search-box ul{
+.search ul{  
   opacity: 0.95;
-  z-index: 1;
+  top: 100%;
+  position: absolute;
   background: var(--bg-300);
+  border-radius: 25px;
+  width: 100%;
+  margin-top: 5px;
 }
 
-.search-box ul li{
-  width: 90dvw;
+.search ul li{
   list-style: none;
-  border-radius: 3px;
+  border-radius: 300px;
   padding: 10px;
   cursor: pointer;
   font-size: large;
@@ -140,6 +162,11 @@ button .fa-solid{
 
 label {
   color: var(--text-100);
+}
+
+.content{
+  display: flex;
+  flex-direction: column;
 }
 
 .album{
