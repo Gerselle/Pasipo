@@ -1,4 +1,4 @@
-const SERVER_ADDRESS = "104.231.13.6";
+const SERVER_ADDRESS = "localhost";
 const NODE_PORT = ":45426";
 const TS_PORT = "8108";
 const TS_KEY = "3jwW1SNDoqkmlxxtOUnvknUNYanh7S4h4TrKCE2791ydg1ep";
@@ -15,32 +15,33 @@ let client = new Typesense.Client({
   'connectionTimeoutSeconds': 2
 })
 
-const profile = document.getElementById("profile");
+// Code for toggling the user login/sigup panel
 const background = document.getElementById("background_blur");
-profile.addEventListener("click", () => {
-  background.style.display = background.style.display === "none" ? "flex" : "none";
-})
+document.getElementById("profile").addEventListener("click", toggleAccess);
 
-const access_button = document.getElementById("access")
-access_button.addEventListener("click", access);
+function toggleAccess(){
+  background.style.display = background.style.display === "none" ? "flex" : "none";
+}
 
 async function access(event){
-
+  console.log(event.value)
   access_request = {
-    'value': event.target.value,
-    'user_name': document.getElementById("user_name").value,
-    'pass_word': document.getElementById("pass_word").value
+    "value": event.value,
+    "user_name": document.getElementById("user_name").value,
+    "pass_word": document.getElementById("pass_word").value,
   }
 
-  if(event.target.value === "signup"){
-    access_request['pass_confirm'] = document.getElementById("pass_confirm").value;;
+  if(event.value === "signup"){
+    access_request["pass_confirm"] = document.getElementById("pass_confirm").value;
   } 
   
-  user_data = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/access`, {
+  access_response = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/access`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify(access_request)
   }).then((response) => response.json());
+
+  console.log(access_response)
 }
 
 // Search html
@@ -116,7 +117,7 @@ async function getAlbum(event = null, album = {url: null}) {
     album = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/search`, {
       'method': "POST",
       'headers': { "Content-Type": "application/json" },
-      'body': JSON.stringify({ "album_query": album_query.value })
+      'body': JSON.stringify({ "album_query": album_query.value})
     }).then((response) => response.json());
   }
 

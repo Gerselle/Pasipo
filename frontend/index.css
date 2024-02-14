@@ -11,60 +11,102 @@
   --bg-300:#3d3f5b;
 }
 
+/* Defaults for html tags */
+
 *{
   padding:0px;
   margin: 0px;
   box-sizing: border-box;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-100);
 }
 
-body {
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+body{
   background-color: var(--bg-100);
 }
 
+button{
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  outline: 0px;
+}
+
+input{
+  padding: 10px;
+  border: 0;
+  outline: 0;
+  border-radius: 10px;
+  font-size: x-large;
+  background: var(--bg-300);
+}
+
+a{
+  color: var(--primary-200);
+  text-decoration: none;
+}
+
+/* Layout div for ensuring top_bar is always on top of the content*/
+.layout{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100dvw;
+}
+
+/* User login/signup (access) section */
+
 .access{
   display: grid;
+  grid-template-rows: 25px 25px 300px 25px 25px;
+  grid-template-columns: 25px 25px 300px 25px 25px;
+  justify-items: center;
   min-width: 100px;
   background: var(--bg-200);
   border-radius: 25px;
   padding: 10px;
 }
 
+
+.access .title{
+  grid-area: 1 / 3 / auto / auto;
+  font-size: xx-large;
+}
+
 .access input{
-  grid-column: 1;
-  width: 350px;
-  height: 50px;
-  background: var(--bg-300);
-  padding: 10px;
-  margin: 10px;
-  border-radius: 10px;
-  border: 0;
-  color: var(--text-100);
-  font-size: x-large;
+  width: 400px;
+  margin-top: 15px;
 }
 
 .access button{
-  margin: 10px;
-  grid-row: 5;
-  grid-column: 1;
-  color: var(--bg-300);
-  background: var(--accent-100);
-  height: 25px;
-  width: 75px;
-  border-radius: 20px;
+  background: var(--bg-100);
+  width: 400px;
+  height: 50px;
+  border-radius: 25px;
+  font-size: x-large;
+  margin-top: 25px;
 }
 
-b{
-  margin: 10px;
-  grid-row: 5;
-  grid-column: 1;
-  justify-self: end;
-  color: var(--text-100);
+.access .close{
+   grid-area: 1 / 5 / auto / auto;
+   margin: 10px;
+   width: 30px;
+   height: 30px;
+   background: transparent;
 }
 
-a{
-  color: var(--primary-200);
-  text-decoration: none;
+.access .info{
+  grid-area: 3 / 3 / auto / auto;
+}
+
+.access .bottom{
+  display: flex;
+  grid-area: 4 / 3 / auto / auto;
+  border-top: 2px solid var(--bg-300);
+  width: 400px;
+  justify-content: center;
+  padding: 10px;
 }
 
 .background-blur{
@@ -78,21 +120,35 @@ a{
   z-index: 5;
 }
 
+/* Top menu bar section */
+
 .top_bar{
   display: flex;
   background: var(--bg-200);
   align-items: center;  
 }
 
-.profile{
-  z-index: 10;
-}
-
-.menu{
+.top_bar button{
   width: 50px;
   height: 50px;
-  background-color: red;
+  margin: 10px;
+  font-size: 25px;
+  border-radius: 50px;
 }
+
+.top_bar img{
+  width: 50px;
+  cursor: pointer;
+  align-items: center;
+  border-radius: 50px;
+}
+
+.top_bar .profile{
+  /* z-index: 100; */
+  background-color: var(--bg-100);
+}
+
+/* Search bar within the top_bar section */
 
 .search{
   z-index: 1;
@@ -113,29 +169,11 @@ a{
 .row{
   display: flex;
   position: relative;
-  margin: 15px;
-  width: 90%;
+  width: 95%;
 }
 
-input{
+.search input{
   flex-grow: 1;
-  font-size: large;
-  background: transparent;
-  border: 0;
-  outline: 0;
-  color: var(--text-100);
-  font-size: x-large;
-}
-
-.row button{
-  background: transparent;
-  border: 0;
-  outline: 0;
-}
-
-.row img{
-  width: 25px;
-  cursor: pointer;
 }
 
 ::placeholder{
@@ -158,45 +196,43 @@ input{
   padding: 10px;
   cursor: pointer;
   font-size: large;
+  color: var(--text-200);
 }
 
-label {
-  color: var(--text-100);
-}
+/* Main content section */
 
 .content{
   display: flex;
-  flex-direction: column;
+  flex: 1;
 }
 
 .album{
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 1dvh;
+  flex-grow: 1;
+  margin: auto;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
-  width: 90dvw;
+  align-items: center;
+  max-width: 90vdw;
 }
 
 .album .cover{
   border-radius: 50%;
-  width: 30dvw;
+  max-width: 70dvw;
 }
 
 .album table{
   display: block;
-  height: 70dvh;
+  max-height: 80dvh;
   overflow-y: auto;
-  background-color: var(--bg-100);
 }
 
 .album table th{
   position: sticky;
   top: 0px;
-  background-color: var(--bg-100);
-  color: var(--text-100);
   font-size: clamp(12px, 3dvw, 25px);
+  background-color: var(--bg-100);
+  max-width: 50dvw;
 }
 
 .album table td{
@@ -204,25 +240,25 @@ label {
   font-size: clamp(10px, 1.5dvw, 20px);
 }
 
+
+/* Transition from landscape to portrait */
 @media (max-aspect-ratio: 1) {
   .album{
     flex-direction: column;
     align-items: center;
+    max-width: 90vdw;
   }
-  .album .cover{
-    width: 30dvh;
-  } 
 
   .album table{
-    height: 60dvh;
+    height: 50dvh;
   }
 
   .album table th{
     font-size: clamp(12px, 3dvh, 50px);
+    max-width: 90dvw;
   }
   
   .album table td{
     font-size: clamp(10px, 1.5dvh, 30px);
   }
-  
 }

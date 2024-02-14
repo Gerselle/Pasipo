@@ -1,7 +1,6 @@
 document.addEventListener("click", (e) => {
   const target = e.target;
   if(!target.matches("a")){ return }
-
   e.preventDefault();
   route(e);
 })
