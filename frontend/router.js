@@ -35,16 +35,23 @@ const routes = {
   }
 }
 
-function route(event){
-  if(event){
-    event.preventDefault();
+async function route(event){
+  event.preventDefault();
+  url = event.target.getAttribute('href')
+
+  if(url === "/login" || url === "/signup"){
+    locationHandler(url);
+  }else{
     window.history.pushState({}, "", event.target.href);
+    locationHandler();
   }
-  locationHandler();
 }
 
-async function locationHandler(){
-  const location = window.location.pathname;
+async function locationHandler(location = null){
+  if(!location){
+     location = window.location.pathname;
+  }
+
   if(location.length == 0){
     location = "/";
   }
@@ -52,14 +59,15 @@ async function locationHandler(){
   const route = routes[location] || routes[404];
   const html = await fetch(route.template).then((response) => response.text());
   document.title = route.title;
-  if(location == "/login" || location == "/signup"){
+
+  if(location === "/login" || location === "/signup"){
     document.getElementById("access").innerHTML = html;
+    document.getElementById("background_blur").style.display = "flex";
   }else{
     document.getElementById("content").innerHTML = html;
-  } 
+  }
 }
 
 window.onpopstate = locationHandler();
-window.router = route();
 
 locationHandler();

@@ -2,8 +2,6 @@ const SERVER_ADDRESS = "localhost";
 const NODE_PORT = ":45426";
 const TS_PORT = "8108";
 const TS_KEY = "3jwW1SNDoqkmlxxtOUnvknUNYanh7S4h4TrKCE2791ydg1ep";
-let TS_OPEN = true;
-let presearch;
 
 let client = new Typesense.Client({
   'nodes': [{
@@ -15,16 +13,16 @@ let client = new Typesense.Client({
   'connectionTimeoutSeconds': 2
 })
 
-// Code for toggling the user login/sigup panel
+// Code for toggling the user login/signup panel
 const background = document.getElementById("background_blur");
 document.getElementById("profile").addEventListener("click", toggleAccess);
 
 function toggleAccess(){
   background.style.display = background.style.display === "none" ? "flex" : "none";
+  window.history.replaceState({}, "", "/");
 }
 
-async function access(event){
-  console.log(event.value)
+async function requestAccess(event){
   access_request = {
     "value": event.value,
     "user_name": document.getElementById("user_name").value,
@@ -40,8 +38,6 @@ async function access(event){
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify(access_request)
   }).then((response) => response.json());
-
-  console.log(access_response)
 }
 
 // Search html
@@ -85,14 +81,12 @@ async function searchAlbum(){
 
     let query_result = await client.collections('albums').documents().search(query)
                                    .catch(e => {});
-    presearch = [];
-
-    if(!query_result) return;
     
+    if(!query_result) return;
+    let presearch = [];
     let results = "";
-
+    
     if(query_result.hits.length != 0){
-      
       for(let i = 0; i < query_result.hits.length; i++){
         if(i == 10){
           break;
@@ -103,6 +97,8 @@ async function searchAlbum(){
       }  
     }
 
+    sessionStorage.setItem("presearch", JSON.stringify(presearch));
+
     search_results.innerHTML = results;
 }
 
@@ -112,6 +108,7 @@ async function getAlbum(event = null, album = {url: null}) {
   search_results.innerHTML = "";
 
   if(event && event.target.nodeName === "LI"){
+    const presearch = JSON.parse(sessionStorage.getItem("presearch"));
     album = presearch[event.target.id];
   }else{
     album = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/search`, {

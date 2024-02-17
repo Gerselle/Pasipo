@@ -1,7 +1,6 @@
 const pg = require('pg');
 const fs = require('fs');
 const dotenv = require('dotenv');
-const crypto = require('crypto');
 dotenv.config();
 
 // Verify that the pool variables here exist in your env file

@@ -15,11 +15,10 @@
   <div class="background-blur" id="background_blur" style="display: none;">
     <div class="access" id="access">
       <b class="title">Log In</b> <button type="button" class="close"><img src="images/close.svg" onclick="toggleAccess()"></button>
-
       <div class="info">
-        <input id="user_name" type="text" placeholder="Username">
+        <input id="user_name" type="text" placeholder="Username/Email">
         <input id="pass_word" type="password" placeholder="Password">
-        <button onclick="access(this)" value="login">Login</button>
+        <button onclick="requestAccess(this)" value="login">Login</button>
       </div>
       
       <div class="bottom">

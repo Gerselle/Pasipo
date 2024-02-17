@@ -34,12 +34,13 @@ app.get('/spotify', function(req, res) {
   res.redirect(process.env.authorization_request);
 });
 
-app.get('/access', function(req, res) {
-  if(req.pass_confirm){
-
-  }else{
-    res.send({})
-  }
+app.post('/access', function(req, res) {
+  res.send({
+    "user_name": req.body.user_name,
+    "pass_word": req.body.pass_word,
+    "pass_confirm": req.body.pass_confirm,
+    "value": req.body.value
+  });
 });
 
 app.post('/search', async function(req, res){
