@@ -1,8 +1,8 @@
-const ts = require('typesense')
+const typesense = require('typesense')
 const dotenv = require('dotenv');
 dotenv.config();
 
-let client = new ts.Client({
+let client = new typesense.Client({
   'nodes': [{
     'host': process.env.tshost, 
     'port': process.env.tsport,      

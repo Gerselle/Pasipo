@@ -160,10 +160,11 @@ a{
   margin-left: auto;
   margin-right: auto;
   background: var(--bg-300);
-  border-radius: 100px;
+  border-radius: 50px;
   width: 50dvw;
   min-width: fit-content;
   max-width: 1000px;
+  background-color: var(--bg-300);
 }
 
 .row{
@@ -174,6 +175,7 @@ a{
 
 .search input{
   flex-grow: 1;
+  border-radius: 50px;
 }
 
 ::placeholder{

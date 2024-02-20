@@ -26,7 +26,7 @@ async function requestAccess(event){
   access_request = {
     "value": event.value,
     "user_name": document.getElementById("user_name").value,
-    "pass_word": document.getElementById("pass_word").value,
+    "pass_word": document.getElementById("pass_word").value
   }
 
   if(event.value === "signup"){
@@ -38,6 +38,7 @@ async function requestAccess(event){
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify(access_request)
   }).then((response) => response.json());
+
 }
 
 // Search html
@@ -86,26 +87,20 @@ async function searchAlbum(){
     let presearch = [];
     let results = "";
     
-    if(query_result.hits.length != 0){
+    if(query_result.hits.length){
       for(let i = 0; i < query_result.hits.length; i++){
-        if(i == 10){
-          break;
-        }
         album = query_result.hits[i].document;
         presearch[i] = album;
-        results += `\t<li id=${ i}>${album.name} by ${album.artists[0].name}</li>\n`
+        results += `\t<li id=${i}>${album.name} by ${album.artists[0].name}</li>\n`
       }  
     }
 
-    sessionStorage.setItem("presearch", JSON.stringify(presearch));
-
     search_results.innerHTML = results;
+    sessionStorage.setItem("presearch", JSON.stringify(presearch));
 }
 
 async function getAlbum(event = null, album = {url: null}) {
-
-  // Clear search suggestions
-  search_results.innerHTML = "";
+  search_results.innerHTML = ""; // Clear search suggestions
 
   if(event && event.target.nodeName === "LI"){
     const presearch = JSON.parse(sessionStorage.getItem("presearch"));
@@ -142,5 +137,4 @@ async function getAlbum(event = null, album = {url: null}) {
   }
 
   document.getElementById("album_table").innerHTML = album_table_update + "\n";
-
 }

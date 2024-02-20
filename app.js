@@ -1,6 +1,5 @@
 // Modules for node express requests/responses
 const express = require('express');
-const body_parser = require('body-parser');
 const path = require("path");
 const cors = require('cors');
 
@@ -13,9 +12,11 @@ const spotify = require('./api/spotify.js');
 const postgres = require('./api/postgres.js');
 const typesense = require('./api/typesense.js');
 
+// Modules for 
+
 const app = express();
 app.use(cors());
-app.use(body_parser.json());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend'), {index: false}));
 
 app.get('/*', (req, res) => {

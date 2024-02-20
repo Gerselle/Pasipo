@@ -37,24 +37,19 @@ const routes = {
 
 async function route(event){
   event.preventDefault();
-  url = event.target.getAttribute('href')
+  location = event.target.getAttribute('href')
 
-  if(url === "/login" || url === "/signup"){
-    locationHandler(url);
-  }else{
+  if(!(location === "/login" || location === "/signup")){
     window.history.pushState({}, "", event.target.href);
-    locationHandler();
   }
+
+  locationHandler(location);
 }
 
 async function locationHandler(location = null){
-  if(!location){
-     location = window.location.pathname;
-  }
+  if(!location){location = window.location.pathname;}
 
-  if(location.length == 0){
-    location = "/";
-  }
+  if(location.length == 0){location = "/";}
 
   const route = routes[location] || routes[404];
   const html = await fetch(route.template).then((response) => response.text());
