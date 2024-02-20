@@ -37,16 +37,16 @@ const routes = {
 
 async function route(event){
   event.preventDefault();
-  location = event.target.getAttribute('href')
+  url = event.target.getAttribute('href')
 
-  if(!(location === "/login" || location === "/signup")){
+  if(!(url === "/login" || url === "/signup")){
     window.history.pushState({}, "", event.target.href);
   }
 
-  locationHandler(location);
+  locationHandler(url);
 }
 
-async function locationHandler(location = null){
+async function locationHandler(location){
   if(!location){location = window.location.pathname;}
 
   if(location.length == 0){location = "/";}
