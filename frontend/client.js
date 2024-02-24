@@ -19,7 +19,6 @@ document.getElementById("profile").addEventListener("click", toggleAccess);
 
 function toggleAccess(){
   background.style.display = background.style.display === "none" ? "flex" : "none";
-  window.history.replaceState({}, "", "/");
 }
 
 async function requestAccess(event){
@@ -33,12 +32,22 @@ async function requestAccess(event){
     access_request["pass_confirm"] = document.getElementById("pass_confirm").value;
   } 
   
-  access_response = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/access`, {
+  fetch(`http://${SERVER_ADDRESS + NODE_PORT}/access`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify(access_request)
-  }).then((response) => response.json());
+  }).then(async (response) => {
 
+    const access_response = await response.json();
+    console.log(access_response)
+
+    if(access_response.error){
+      alert(access_response.error);
+    }else{
+      background.style.display == "none";
+    }
+
+  });
 }
 
 // Search html

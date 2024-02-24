@@ -10,8 +10,9 @@ CREATE TABLE IF NOT EXISTS albums(
 
 CREATE TABLE IF NOT EXISTS users(
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_name VARCHAR(255),
-  pass_word VARCHAR(255),
+  user_name VARCHAR(255) UNIQUE,
+  salt BYTEA,
+  hashed_pass_word BYTEA,
   user_email VARCHAR(255),
   profile_name VARCHAR(255),
   user_token JSONB[]

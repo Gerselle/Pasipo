@@ -7,17 +7,34 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// Custom modules for Pasipo functionality 
-const spotify = require('./api/spotify.js');
-const postgres = require('./api/postgres.js');
-const typesense = require('./api/typesense.js');
+// Custom modules for API calls
+const spotify = require('./backend/api/spotify.js');
+const postgres = require('./backend/api/postgres.js');
+const typesense = require('./backend/api/typesense.js');
 
-// Modules for 
+// Custom modules for user authentication/sessions
+const session = require("express-session");
+const sessionStore = require("connect-pg-simple")(session);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend'), {index: false}));
+
+const crypto = require("crypto");
+const { log } = require('console');
+
+app.use(session({
+  store: new sessionStore({
+    pool : postgres.pool,
+    createTableIfMissing: true
+  }),
+  secret: process.env.COOKIE_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  secure: false,
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+}));
 
 app.get('/*', (req, res) => {
   res.sendFile(__dirname + "/frontend/index.html");
@@ -35,14 +52,28 @@ app.get('/spotify', function(req, res) {
   res.redirect(process.env.authorization_request);
 });
 
-app.post('/access', function(req, res) {
-  res.send({
-    "user_name": req.body.user_name,
-    "pass_word": req.body.pass_word,
-    "pass_confirm": req.body.pass_confirm,
-    "value": req.body.value
-  });
+app.post('/access', async function(req, res) {
+  let response = {error: "Issue with login/signup."};
+
+  if(req.body.value === "login"){
+    response = await postgres.login(req.body.user_name, req.body.pass_word);
+  }else if(req.body.value === "signup"){
+    response = await postgres.signup(req.body.user_name, req.body.pass_word, req.body.pass_confirm);
+  }
+
+  if(response.error){
+    res.status(403).send(response);
+  }else{
+    req.session.authenticated = true;
+    req.session.user = response;
+    res.redirect('/');
+  }
 });
+
+app.get('/logout', async function(req, res, next){
+  req.session.destroy();
+  res.redirect('/');
+})
 
 app.post('/search', async function(req, res){
   const query = req.body.album_query.toLowerCase();

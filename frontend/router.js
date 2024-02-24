@@ -55,11 +55,14 @@ async function locationHandler(location){
   const html = await fetch(route.template).then((response) => response.text());
   document.title = route.title;
 
+  const access = document.getElementById("background_blur");
+
   if(location === "/login" || location === "/signup"){
     document.getElementById("access").innerHTML = html;
-    document.getElementById("background_blur").style.display = "flex";
+    access.style.display = "flex";
   }else{
     document.getElementById("content").innerHTML = html;
+    access.style.display = "none";
   }
 }
 
