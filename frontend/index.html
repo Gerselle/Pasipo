@@ -11,7 +11,7 @@
     <script src="/typesense.min.js"></script>
 </head>
 
-<body>
+<body class="dark">
   <div class="background-blur" id="background_blur" style="display: none;">
     <div class="access" id="access">
       <b class="title">Log In</b> <button type="button" class="close"><img src="images/close.svg" onclick="toggleAccess()"></button>
@@ -37,9 +37,21 @@
         </div>
         <ul id="search_results"></ul>
       </div>
-      <button type="button" class="profile" id="profile" >
+      <button type="button" class="icon" id="icon" onclick="iconClick()">
         TEST
       </button>
+    </div>
+
+    <div class="profile" id="profile" style="display: none;">
+      <div class="section" id="settings">
+          <button type="button">Settings</button>
+      </div>
+      <div class="section" id="dark_mode">
+          <button type="button"><div onclick="toggleDarkMode()" id="mode">Light Mode</div></button>
+      </div>      
+      <div class="section" id="logout">
+          <button type="button" onclick="authorize()" id="authorize">Logout</button>
+      </div>
     </div>
     
     <div class="content" id="content">

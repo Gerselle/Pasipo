@@ -14,11 +14,33 @@ let client = new Typesense.Client({
 })
 
 // Code for toggling the user login/signup panel
-const background = document.getElementById("background_blur");
-document.getElementById("profile").addEventListener("click", toggleAccess);
+const access = document.getElementById("background_blur");
+const profile = document.getElementById("profile");
+if(localStorage.getItem("color_mode")){
+  let mode = localStorage.getItem("color_mode");
+  document.body.className = mode;
+  mode = mode === "dark" ? "light" : "dark";
+  document.getElementById("mode").innerHTML = 
+  mode.charAt(0).toUpperCase() + mode.slice(1) + " Mode";
+}
+
+function iconClick(){
+  document.getElementById("authorize").innerHTML = 
+  localStorage.getItem("authorized") === "true" ? "Log Out" : "Log In"
+  profile.style.display = profile.style.display === "none" ? "flex" : "none";
+}
 
 function toggleAccess(){
-  background.style.display = background.style.display === "none" ? "flex" : "none";
+  profile.style.display = false;
+  access.style.display = access.style.display === "none" ? "flex" : "none";
+}
+
+function toggleDarkMode(){
+  const mode = document.body.className;
+  document.getElementById("mode").innerHTML = 
+  mode.charAt(0).toUpperCase() + mode.slice(1) + " Mode";
+  document.body.className = document.body.className === "dark" ? "light" : "dark";
+  localStorage.setItem("color_mode", document.body.className);
 }
 
 async function requestAccess(event){
@@ -39,15 +61,29 @@ async function requestAccess(event){
   }).then(async (response) => {
 
     const access_response = await response.json();
-    console.log(access_response)
 
     if(access_response.error){
       alert(access_response.error);
     }else{
-      background.style.display == "none";
+      access.style.display = "none";
+      localStorage.setItem("authorized", "true");
     }
-
   });
+}
+
+async function authorize(){
+  profile.style.display = "none";
+  if(localStorage.getItem("authorized") === "true"){ // Logout if logged in
+    fetch(`http://${SERVER_ADDRESS + NODE_PORT}/logout`, {
+      'method': "POST",
+      'headers': { "Content-Type": "application/json" },
+      'body': JSON.stringify({logout: true})
+    }).then(async (response) => {
+      localStorage.setItem("authorized", "false"); 
+    });
+  }else{ // Open login/signup panel
+    toggleAccess();
+  }
 }
 
 // Search html

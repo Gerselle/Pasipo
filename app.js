@@ -21,9 +21,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend'), {index: false}));
 
-const crypto = require("crypto");
-const { log } = require('console');
-
 app.use(session({
   store: new sessionStore({
     pool : postgres.pool,
@@ -66,13 +63,14 @@ app.post('/access', async function(req, res) {
   }else{
     req.session.authenticated = true;
     req.session.user = response;
-    res.redirect('/');
+    res.send({msg: "Successful login/signup."})
   }
 });
 
-app.get('/logout', async function(req, res, next){
-  req.session.destroy();
-  res.redirect('/');
+app.post('/logout', async function(req, res){
+  req.session.destroy(function(err){
+    res.clearCookie('connect.sid', {path: "/"}).send('Cleared session cookie.');
+  });
 })
 
 app.post('/search', async function(req, res){

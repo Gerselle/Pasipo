@@ -35,11 +35,13 @@ const routes = {
   }
 }
 
+const unreachable = ["/login", "/signup", "/logout"];
+
 async function route(event){
   event.preventDefault();
-  url = event.target.getAttribute('href')
+  url = event.target.getAttribute('href');
 
-  if(!(url === "/login" || url === "/signup")){
+  if(!unreachable.includes(url)){
     window.history.pushState({}, "", event.target.href);
   }
 
@@ -57,13 +59,14 @@ async function locationHandler(location){
 
   const access = document.getElementById("background_blur");
 
-  if(location === "/login" || location === "/signup"){
+  if(["/login", "/signup"].includes(location)){
     document.getElementById("access").innerHTML = html;
     access.style.display = "flex";
   }else{
     document.getElementById("content").innerHTML = html;
     access.style.display = "none";
   }
+
 }
 
 window.onpopstate = locationHandler();
