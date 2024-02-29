@@ -3,7 +3,7 @@ document.addEventListener("click", (e) => {
   if(!target.matches("a")){ return }
   e.preventDefault();
   route(e);
-})
+});
 
 const title = "Pasipo"
 
@@ -62,6 +62,7 @@ async function locationHandler(location){
   if(["/login", "/signup"].includes(location)){
     document.getElementById("access").innerHTML = html;
     access.style.display = "flex";
+    window.history.pushState({}, "", "/");
   }else{
     document.getElementById("content").innerHTML = html;
     access.style.display = "none";
@@ -69,6 +70,9 @@ async function locationHandler(location){
 
 }
 
-window.onpopstate = locationHandler();
-
-locationHandler();
+window.addEventListener("popstate", (event) => {
+  window.locationHandler();
+  console.log(
+    `location: ${document.location}, state: ${JSON.stringify(event.state)}`,
+  );
+});

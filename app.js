@@ -33,8 +33,22 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 
-app.get('/*', (req, res) => {
-  res.sendFile(__dirname + "/frontend/index.html");
+app.get('/:user_name/:year/:month/:day', (req, res) =>{
+  
+  const {user_name, year, month, day} = req.params;
+  if(req.session.user){
+    if(req.session.user.user_name == user_name){
+
+    }else{ // User is looking at another user
+      
+    }
+
+  }else{ // Guest user
+    res.send({msg: `Guest user viewing ${user_name}'s `});
+  } 
+
+  console.log({ user_name, year, month, day });
+  res.send({msg: "Attempt to view user's day."})
 });
 
 app.get('/callback', async function(req, res){
@@ -67,18 +81,32 @@ app.post('/access', async function(req, res) {
   }
 });
 
-app.post('/logout', async function(req, res){
-  req.session.destroy(function(err){
-    res.clearCookie('connect.sid', {path: "/"}).send('Cleared session cookie.');
-  });
+app.post('/album/:action', async function (req, res){  
+  if(req.session.authenticated){
+    const action = req.params.action;
+    console.log(req.body)
+    console.log(action);
+  }else{
+    res.send({error: "User is not logged in."})
+  }
+});
+
+app.get('/logout', async function(req, res){
+  if(req.session.authenticated){
+    req.session.destroy(function(err){
+      res.clearCookie('connect.sid', {path: "/"}).send('Cleared session cookie.');
+    });
+  }else{
+    res.sendFile(__dirname + "/frontend/index.html");
+  }
 })
 
 app.post('/search', async function(req, res){
   const query = req.body.album_query.toLowerCase();
-  const check = await typesense.query(query);
+  const check_ts = await typesense.query(query);
   
-  if(check){
-    res.send(check[0]);
+  if(check_ts){
+    res.send(check_ts[0]);
   }else{
     const search_response = await spotify.albumSearch(query);
     if(search_response){
@@ -89,6 +117,11 @@ app.post('/search', async function(req, res){
       res.send({url: null});
     }
   }
+});
+
+
+app.get('/*', (req, res) => {
+  res.sendFile(__dirname + "/frontend/index.html");
 });
 
 const port = process.env.server_port;

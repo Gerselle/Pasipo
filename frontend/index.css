@@ -26,17 +26,26 @@
   --filter: invert(64%) sepia(9%) saturate(314%) hue-rotate(244deg) brightness(94%) contrast(89%);
 }
 
+/* Classes for toggling user interaction */
+.no-select{
+  -webkit-user-select: none; 
+  -ms-user-select: none; 
+  user-select: none; 
+}
+
 /* Defaults for html tags */
 *{
   padding:0px;
-  margin: 0px;
+  margin: 0;
   box-sizing: border-box;
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text-100);
 }
 
-body{
+html, body{
   background-color: var(--bg-100);
+  height: 100%;
+  overflow: hidden;
 }
 
 button{
@@ -44,15 +53,21 @@ button{
   border: 0;
   cursor: pointer;
   outline: 0px;
+  width: 400px;
+  height: 50px;
+  border-radius: 25px;
+  font-size: x-large;
 }
 
 input{
   padding: 10px;
+  height: 50px;
   border: 0;
   outline: 0;
   border-radius: 10px;
   font-size: x-large;
-  background: var(--bg-300);
+  background: transparent;
+  width: 100%;
 }
 
 a{
@@ -62,10 +77,9 @@ a{
 
 /* Layout div for ensuring top_bar is always on top of the content*/
 .layout{
-  position: relative;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100%;
   width: 100dvw;
 }
 
@@ -73,14 +87,13 @@ a{
 .access{
   display: grid;
   grid-template-rows: 25px 25px 300px 25px 25px;
-  grid-template-columns: 25px 25px 300px 25px 25px;
+  grid-template-columns: 25px 25px 320px 25px 25px;
   justify-items: center;
-  min-width: 100px;
+  min-width: 400px;
   background: var(--bg-200);
   border-radius: 25px;
   padding: 10px;
 }
-
 
 .access .title{
   grid-area: 1 / 3 / auto / auto;
@@ -88,22 +101,18 @@ a{
 }
 
 .access input{
+  margin: 10px;
   width: 400px;
-  margin-top: 15px;
+  background-color: var(--bg-300);
 }
 
 .access button{
+  margin: 10px;
   background: var(--bg-100);
-  width: 400px;
-  height: 50px;
-  border-radius: 25px;
-  font-size: x-large;
-  margin-top: 25px;
 }
 
 .access .close{
-   grid-area: 1 / 5 / auto / auto;
-   margin: 10px;
+   grid-area: 1 / 4 / auto / auto;
    width: 30px;
    height: 30px;
    background: transparent;
@@ -120,7 +129,8 @@ a{
   border-top: 2px solid var(--bg-300);
   width: 400px;
   justify-content: center;
-  padding: 10px;
+  align-content: center;
+  padding: 15px;
 }
 
 .background-blur{
@@ -136,32 +146,32 @@ a{
 
 /* Top menu bar section */
 
-.top_bar{
+.top-bar{
   height: 75px;
   display: flex;
   background: var(--bg-200);
-  align-items: center;  
+  align-items: center;
 }
 
-.top_bar button{
+.top-bar button{
   width: 50px;
   height: 50px;
   margin: 10px;
   font-size: 25px;
   border-radius: 50px;
+  
 }
 
-.top_bar img{
-  width: 50px;
-  cursor: pointer;
-  align-items: center;
-  border-radius: 50px;
-  filter: var(--filter);
-}
-
-.top_bar .icon{
+.top-bar .icon{
   background-color: var(--bg-100);
   cursor: pointer;
+}
+
+.top-bar img{
+  cursor: pointer;
+  border-radius: 50px;
+  filter: var(--filter);
+  width: 50px;
 }
 
 /* Search bar within the top_bar section */
@@ -170,29 +180,24 @@ a{
   z-index: 1;
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   margin: 10px;
   margin-left: auto;
   margin-right: auto;
   background: var(--bg-300);
-  border-radius: 50px;
-  width: 50dvw;
-  min-width: fit-content;
-  max-width: 1000px;
+  border-radius: 20px;
+  width: 75dvw;
+  height: 80%;
+  min-width: 100px;
+  max-width: 1500px;
   background-color: var(--bg-300);
 }
 
 .row{
   display: flex;
-  position: relative;
-  width: 95%;
-  height: 60px;
-}
-
-.search input{
-  flex-grow: 1;
-  border-radius: 50px;
+  width: 100%;
+  align-items: center;
+  padding: 10px;
 }
 
 ::placeholder{
@@ -204,9 +209,9 @@ a{
   top: 100%;
   position: absolute;
   background: var(--bg-300);
-  border-radius: 25px;
+  border-radius: 10px;
   width: 100%;
-  margin-top: 5px;
+  margin-top: 8px;
 }
 
 .search ul li{
@@ -224,8 +229,8 @@ a{
   display: flex;
   flex-direction: column;
   position: absolute;
-  right: 5px;
-  top: 80px;
+  right: 2px;
+  top: 73px;
   z-index: 1;
   background-color: var(--bg-200);
   width: 100dvw;
@@ -248,63 +253,216 @@ a{
 /* Main content section */
 
 .content{
+  flex-grow: 1;
   display: flex;
-  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
 }
 
-.album{
-  flex-grow: 1;
-  margin: auto;
+/* Album date/options section */
+.options{
+  width: 100%;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  align-items: center;
+}
+
+.date{
+  display: flex;
+  height: 50px;
+  width: 100%;
+  align-items: center;
+  justify-content: space-around;
+  font-size: xx-large;
+}
+
+.date img{
+  width: 40px;
+  cursor: pointer;
+  filter: var(--filter);
+}
+
+.calendar{
+  position: absolute;
+  /* display: none; */
+  aspect-ratio: 14/11;
+  flex-direction: column;
+  width: 90%;
+  min-width: 400px;
+  max-width: 1500px;
+  max-height: 90%;
+  z-index: 1;
+  background-color: var(--bg-200);
+  border: solid var(--bg-300) 1px;
+  border-radius: 25px;
+  overflow: hidden;
+}
+
+.calendar .header{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100%/11);
+  background-color: var(--bg-300);  
+}
+
+.header .panel{
+  display: flex;
+  align-content: center;
+  justify-content: space-evenly;
+  width: 50%;
+}
+
+.calendar .header img{
+  width: 7%;
+  cursor: pointer;
+  filter: var(--filter);
+}
+
+.calendar .header .close{
+  position: absolute;
+  right: 25px;
+  width: 4%;
+  height: 5%;
+  min-width: 25px;
+  min-height: 25px;
+}
+
+.calendar .header .close img{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -40%);
+  width: 100%;
+}
+
+.header .date{
+  cursor: pointer;
+  font-size: clamp(1rem, 3.25dvw, 3.5rem);
+}
+
+.calendar .dates{
+  width: 100%;
+  flex-grow: 1;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.calendar .day{
+  position: relative;
+  width: calc(100%/7);
+  height: calc(100%/5);
+  overflow: hidden;
+  border: solid var(--bg-100) 1px;
+} 
+
+.day img{
+  aspect-ratio: 1/1;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  opacity: 50%;
+}
+
+.day .num{
+  position: absolute;
+  right: 0;
+  background-color: var(--bg-100);
+  color: var(--text-200);
+  font-size: clamp(0.5rem, 2dvw, 2rem);
+  text-align: center;
+  height: 25%;
+  width: 30%;
+  border-radius: 0 0 0 25px;
+}
+
+.day.clickable{
+  cursor: pointer;
+}
+
+.day.focused img{
+  opacity: 100%;
+}
+
+.day.focused .num{
+  background-color: var(--primary-200);
+  color: var(--bg-100);
+}
+
+.current-album{
+  margin: 10px;
+  text-align: center;
+  width: 90%;
+  font-size: 25px;
+}
+
+.select{
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+}
+
+.select button{
+  background: var(--bg-200);
+  width: 33%;
+  max-width: 300px;
+}
+
+
+/* Album info section */
+.album{
+  display: flex;
   justify-content: space-evenly;
   align-items: center;
-  max-width: 90vdw;
+  width: 100%;
+  padding: 25px;
+  overflow: hidden;
 }
 
-.album .cover{
+.album img{
   border-radius: 50%;
-  max-width: 70dvw;
+  max-height: 50dvh;
+  filter: none;
 }
 
 .album table{
   display: block;
-  max-height: 80dvh;
+  max-height: 100%;
   overflow-y: auto;
 }
 
 .album table th{
   position: sticky;
   top: 0px;
-  font-size: clamp(12px, 3dvw, 25px);
+  font-size: 3dvh;
   background-color: var(--bg-100);
-  max-width: 50dvw;
 }
 
 .album table td{
   color: var(--text-200);
-  font-size: clamp(10px, 1.5dvw, 20px);
+  font-size: 2dvh;
 }
-
 
 /* Transition from landscape to portrait */
 @media (max-aspect-ratio: 1) {
   .album{
     flex-direction: column;
     align-items: center;
-    max-width: 90vdw;
   }
 
-  .album table{
-    height: 50dvh;
+  .album img{
+    max-width: 50dvw;
   }
 
   .album table th{
-    font-size: clamp(12px, 3dvh, 50px);
-    max-width: 90dvw;
+    font-size: 3dvw;
   }
   
   .album table td{
-    font-size: clamp(10px, 1.5dvh, 30px);
+    font-size: 2dvw;
   }
 }

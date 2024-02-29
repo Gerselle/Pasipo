@@ -9,10 +9,11 @@
     <script src="/client.js" defer></script>
     <script src="/router.js" defer></script>
     <script src="/typesense.min.js"></script>
+    <script src="/dayjs.min.js"></script>
 </head>
 
 <body class="dark">
-  <div class="background-blur" id="background_blur" style="display: none;">
+  <div class="background-blur" id="background_blur" style="display: none">
     <div class="access" id="access">
       <b class="title">Log In</b> <button type="button" class="close"><img src="images/close.svg" onclick="toggleAccess()"></button>
       <div class="info">
@@ -28,12 +29,12 @@
   </div>
     
   <div class="layout">
-    <div class="top_bar" id="top_bar">
-      <button type="button" id="menu"><img src="/images/menu.svg"></button>
+    <div class="no-select top-bar" id="top_bar">
+      <button type="button" id="menu"><img src="images/menu.svg"></button>
       <div class="search">
         <div class="row">
-            <input type="text" id="search_bar" placeholder="Get one here..." autocomplete="off">
-            <button id="search_button" type="button"><img src="/images/search.svg"></button>
+            <input type="text" id="search_bar" placeholder="Search for an album..." autocomplete="off">
+            <button id="search_button" type="button"><img src="images/search.svg"></button>
         </div>
         <ul id="search_results"></ul>
       </div>
@@ -42,7 +43,7 @@
       </button>
     </div>
 
-    <div class="profile" id="profile" style="display: none;">
+    <div class="profile" id="profile" style="display: none">
       <div class="section" id="settings">
           <button type="button">Settings</button>
       </div>
@@ -53,10 +54,44 @@
           <button type="button" onclick="authorize()" id="authorize">Logout</button>
       </div>
     </div>
-    
-    <div class="content" id="content">
+  
+    <div class="content" id="content">    
+      <div class="no-select options" id="options">
+        <div class="date"> 
+          <img style="transform:rotate(180deg);" src="images/arrow.svg" onclick="moveDate(false)">
+          <div id="date" style="cursor: pointer;" value="" onclick="toggleCalendar()"></div>
+          <img src="images/arrow.svg" onclick="moveDate(true)">
+        </div>
+
+        <div class="calendar" id="calendar" style="display: none">
+          <div class="header">
+            <div class="panel">
+              <img style="transform:rotate(180deg);" src="images/arrow.svg" onclick="moveMonth(false)">
+              <div class="panel">
+                  <div class="date" id="months">Feb</div>
+                  <div class="date" id="years">2024</div>
+              </div>
+              <img src="images/arrow.svg" onclick="moveMonth(true)">
+            </div>
+            <button type="button" class="close"><img src="images/close.svg" onclick="toggleCalendar()"></button>
+        </div>
+          <div class="dates" id="calendar_dates">
+          </div>
+        </div>
+        
+        <div class="current-album" id="current_album">
+       </div>
+
+        <div class="select" id="select" style="display: none;">
+          <button type="button" onclick="updateAlbum()" id="album_update"> Update </button>
+          <button type="button" onclick="resetAlbum()"> Reset </button>
+          <button type="button" onclick="deleteAlbum()"> Delete </button>
+        </div>
+      </div>
+
       <div class="album">
-        <div class="album-cover" id="album_cover">
+
+        <div id="album_cover">
           <a href=""><img class="album cover" src="" alt=""></a>
         </div>             
         <table id="album_table">
