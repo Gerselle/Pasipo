@@ -56,7 +56,17 @@ async function addAlbum(album){
 
 }
 
-// User daily album info manipulation
+async function getAlbum(album_id){
+    const album = await query("SELECT * FROM albums WHERE id=$1", [album_id]);
+    return album.rows[0];
+}
+
+// User daily album info
+async function pullUserAlbums(user){
+    const albums = await query("SELECT * FROM pasipo WHERE user_id = $1", [user.user_id]);
+    return albums.rows;
+}
+
 async function addUserAlbum(user, data){
     if(!data.date){ return {error: "No date provided for user album addition."}; }
     if(!data.album_id){ return {error: "No album provided for user album addition."}; }
@@ -127,7 +137,7 @@ async function login(user_name, pass_word){
 
 module.exports = {
     pool, 
-    addAlbum,
-    addUserAlbum, updateUserAlbum, deleteUserAlbum,
+    addAlbum, getAlbum,
+    pullUserAlbums, addUserAlbum, updateUserAlbum, deleteUserAlbum,
     query, signup, login
 };

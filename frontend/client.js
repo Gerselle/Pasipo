@@ -33,12 +33,49 @@ document.addEventListener("DOMContentLoaded", async (event) => {
   fetch(`http://${SERVER_ADDRESS + NODE_PORT}/check`).then(async (response) => {
     localStorage.setItem("current_user", JSON.stringify(await response.json()));
   });
+  
 });
 
 window.addEventListener("load", async (event) => {
   await dbStart();
-  displayAlbum();
+  pullAlbums();
 });
+
+async function pullAlbums(){
+  if(localStorage.getItem("authorized") === "true"){
+
+    await dbAccess("user_albums", null, "clear");
+
+    await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
+    'method': "POST",
+    'headers': { "Content-Type": "application/json" },
+    'body': JSON.stringify({
+      field: "album",
+      action: "pull",
+      })
+    }).then(async (response) => {
+      const user_albums = await response.json();
+      user_albums.forEach(user_album => {
+        dbAccess("user_albums", {date: dayjs(user_album.date).format("MMM DD, YYYY"), id: user_album.album_id}, "add");
+      });
+    });
+  }
+  displayAlbum();
+}
+
+async function pushAlbums(albums){
+  if(localStorage.getItem("authorized") === "true"){
+    await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
+    'method': "POST",
+    'headers': { "Content-Type": "application/json" },
+    'body': JSON.stringify({
+      field: "album",
+      action: "push",
+      data: albums
+      })
+    });
+  }
+}
 
 function dbStart(){
   return new Promise((resolve, reject) => {
@@ -65,7 +102,6 @@ function dbAccess(store, data, operation = null){
   return new Promise((resolve, reject) => { 
     if(operation){
         const transaction = databaseStorage.transaction([store], "readwrite");
-
         transaction.onerror = (event) => {
           resolve({error: `ObjectStore "${store}" ${operation} error:\n ${event.target.error}`});
         };
@@ -86,6 +122,9 @@ function dbAccess(store, data, operation = null){
             case "delete":
               request = objectStore.delete(data);
               break;
+            case "clear":
+              request = objectStore.clear();
+              break;
             default:
               resolve({error: `ObjectStore "${store}" access with invalid operation.`});
           }
@@ -103,7 +142,13 @@ function dbAccess(store, data, operation = null){
 async function albumOfDate(date){
   const album_date = await dbAccess("user_albums", date, "get");
   if(album_date){
-    return await dbAccess("albums", album_date.id, "get");
+    let album = await dbAccess("albums", album_date.id, "get")
+    if(album == null){
+        album = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/album_id/${album_date.id}`)
+                      .then((response) => album = response.json());
+        dbAccess("albums", album, "add");
+    }
+    return album;
   }else{
     return null;
   }
@@ -146,7 +191,6 @@ async function updateCalendar(){
 
   const calendar_offset = current.day();
   const month_end = current.endOf('month').add(1, 'day');
-  const local_albums = JSON.parse(localStorage.getItem("local_albums"));
   const calendar_days = [];
 
   // Getting all the days of the month, all days will be json objects,
@@ -158,7 +202,7 @@ async function updateCalendar(){
 
     if(album){
       day["name"] = album.name;
-      day["image"] = album.image
+      day["image"] = album.image;
     }
 
     calendar_days[i] = day;
@@ -355,6 +399,8 @@ async function requestAccess(event){
       access.style.display = "none";
       localStorage.setItem("current_user", JSON.stringify(access_response));
       localStorage.setItem("authorized", "true");
+      await pullAlbums();
+      displayAlbum();
     }
   });
 }
@@ -363,7 +409,9 @@ async function authorize(){
   profile.style.display = "none";
   if(localStorage.getItem("authorized") === "true"){ // Logout if logged in
     fetch(`http://${SERVER_ADDRESS + NODE_PORT}/logout`).then(() => {
-      localStorage.setItem("authorized", "false"); 
+      localStorage.setItem("authorized", "false");
+      dbAccess("user_albums", null, "clear"); 
+      displayAlbum();
     });
   }else{ // Open login/signup panel
     toggleAccess();
@@ -465,7 +513,7 @@ async function displayAlbum(set_album){
   const cover = document.getElementById("album_cover");
   const table = document.getElementById("album_table");
   
-  const album = set_album || await albumOfDate(sessionStorage.getItem("selected_date"));
+  const album = set_album || await albumOfDate(selected_date);
 
   if(album){
     cover.innerHTML = `\n<a href=${album.url}><img class="album cover" src="${album.image}" alt="${album.name}"></a>`;

@@ -48,15 +48,7 @@ app.get('/check', function(req, res){
   res.send(sessionUser(req.session)); 
 });
 
-app.get('/user_albums', async function(req, res){
-  if(res.session.authenticated){
-
-  }else{
-    res.send({albums: null})
-  }
-});
-
-app.post('/action', function(req, res){
+app.post('/action', async function(req, res){
   const session = req.session;
   const field = req.body.field;
   const action = req.body.action;
@@ -66,6 +58,18 @@ app.post('/action', function(req, res){
     switch(field){
       case "album":
         switch(action){
+          case "pull":
+            res.send(await postgres.pullUserAlbums(session.user));
+            break;
+          case "push":
+            const conflicts = [];
+            if(data.albums){
+              data.albums.forEach(album_id => async function(){
+                conflicts.push(await postgres.addUserAlbum(session.user, {date: data.date, album_id: album_id}));
+              });
+            }
+            res.send(conflicts);
+            break;
           case "add":
             res.send(postgres.addUserAlbum(session.user, data));
             break;
@@ -75,6 +79,7 @@ app.post('/action', function(req, res){
           case "delete":
             res.send(postgres.deleteUserAlbum(session.user, data));
             break;
+          
           default:
             res.send({error: "No valid album action provided."});
         }
@@ -164,6 +169,10 @@ app.post('/search', async function(req, res){
       res.send({url: null});
     }
   }
+});
+
+app.get('/album_id/:id', async function(req, res){
+  res.send(await postgres.getAlbum(req.params.id));
 });
 
 app.get('/*', (req, res) => {
