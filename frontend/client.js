@@ -17,22 +17,97 @@ let client = new Typesense.Client({
 const access = document.getElementById("background_blur");
 const profile = document.getElementById("profile");
 const date = document.getElementById("date");
+let databaseStorage;
 
-document.addEventListener("DOMContentLoaded", (event) => {
+document.addEventListener("DOMContentLoaded", async (event) => {
+
   toggleDarkMode(localStorage.getItem("color_mode"));
-  const date = document.getElementById("date");
-  const today = dayjs().format("MMM DD, YYYY");
-  date.innerHTML = today;
-  sessionStorage.setItem("calendar_date", dayjs(today).startOf('month').format("MMM DD, YYYY"));
+  date.innerHTML = dayjs().format("MMM DD, YYYY");
+  sessionStorage.setItem("calendar_date", dayjs(date.innerHTML).startOf('month').format("MMM DD, YYYY"));
   sessionStorage.setItem("selected_date", date.innerHTML);
-  sessionStorage.setItem("calendar", JSON.stringify([]));
-
+  sessionStorage.setItem("selected_album", null);
   if(localStorage.getItem("local_albums") == null){
     localStorage.setItem("local_albums", JSON.stringify({}));
   }
 
-  displayUpdate();
+  fetch(`http://${SERVER_ADDRESS + NODE_PORT}/check`).then(async (response) => {
+    localStorage.setItem("current_user", JSON.stringify(await response.json()));
+  });
 });
+
+window.addEventListener("load", async (event) => {
+  await dbStart();
+  displayAlbum();
+});
+
+function dbStart(){
+  return new Promise((resolve, reject) => {
+    const request = window.indexedDB.open("database", 1);
+
+    request.onerror = (event) => {
+      console.error(`Database error: ${event.target.errorCode}`);
+    };
+  
+    request.onsuccess = (event) => {
+      databaseStorage = event.target.result;
+      resolve();
+    };
+  
+    request.onupgradeneeded = async (event) => {
+      const db = event.target.result;
+      db.createObjectStore("albums", {keyPath: "id"});
+      db.createObjectStore("user_albums", {keyPath: "date"});
+    }
+  });
+}
+
+function dbAccess(store, data, operation = null){
+  return new Promise((resolve, reject) => { 
+    if(operation){
+        const transaction = databaseStorage.transaction([store], "readwrite");
+
+        transaction.onerror = (event) => {
+          resolve({error: `ObjectStore "${store}" ${operation} error:\n ${event.target.error}`});
+        };
+        
+        const objectStore = transaction.objectStore(store);
+
+          let request;
+          switch(operation){
+            case "get":
+              request = objectStore.get(data);
+              break;
+            case "add":
+              request = objectStore.add(data);
+              break;
+            case "update":
+              request = objectStore.put(data);
+              break;
+            case "delete":
+              request = objectStore.delete(data);
+              break;
+            default:
+              resolve({error: `ObjectStore "${store}" access with invalid operation.`});
+          }
+
+          request.onsuccess = (event) =>{
+            resolve(event.target.result);
+          }
+
+    }else{
+      resolve({error: `ObjectStore "${store}" access with no operation.`});
+    }
+  });
+}
+
+async function albumOfDate(date){
+  const album_date = await dbAccess("user_albums", date, "get");
+  if(album_date){
+    return await dbAccess("albums", album_date.id, "get");
+  }else{
+    return null;
+  }
+}
 
 async function moveDate(increment){
   // Require user to select a new album for each date
@@ -46,7 +121,7 @@ async function moveDate(increment){
   date.innerHTML = selected_date.format("MMM DD, YYYY");
   sessionStorage.setItem("selected_date", date.innerHTML);
 
-  displayUpdate();
+  displayAlbum();
 }
 
 async function moveMonth(increment){
@@ -60,11 +135,11 @@ async function setDate(value){
   // Require user to select a new album for each date
   sessionStorage.setItem("selected_album", null);
   sessionStorage.setItem("selected_date", value);
-  displayUpdate();
+  displayAlbum();
   toggleCalendar();
 }
 
-function updateCalendar(){
+async function updateCalendar(){
   let current = dayjs(sessionStorage.getItem("calendar_date")).startOf('month');
   document.getElementById("months").innerHTML = `${current.format("MMM")}`;
   document.getElementById("years").innerHTML = `${current.format("YYYY")}`;
@@ -78,7 +153,7 @@ function updateCalendar(){
   // but only days with albums will have a non-null name/image
   for(let i = 0; !current.isSame(month_end, 'day'); i++){
     const selected = current.isSame(dayjs(sessionStorage.getItem("selected_date"), "MMM DD, YYYY"));
-    let album = local_albums[current.format("MMM DD, YYYY")];
+    let album = await albumOfDate(current.format("MMM DD, YYYY"));
     let day = {num: i + 1, selected: selected, date: current.format("MMM DD, YYYY")}
 
     if(album){
@@ -94,6 +169,13 @@ function updateCalendar(){
   const calendar = [];
   for(let i = calendar_offset; i < calendar_days.length + calendar_offset; i++){
     calendar[i] = calendar_days[i - calendar_offset];
+  }
+
+  const calendar_element = document.getElementById("calendar_dates");
+  calendar_element.innerHTML = "";
+
+  for(let i = 0; i < 35; i++){
+    calendar_element.appendChild(dayChild(calendar[i]));
   }
 
   function dayChild(day_children){
@@ -119,15 +201,8 @@ function updateCalendar(){
   
       day.appendChild(num);
     }    
-    
+
     return day;
-  }
-  
-  const calendar_element = document.getElementById("calendar_dates");
-  calendar_element.innerHTML = "";
-  
-  for(let i = 0; i < 35; i++){
-    calendar_element.appendChild(dayChild(calendar[i]));
   }
 }
 
@@ -139,24 +214,23 @@ function toggleCalendar(){
   updateCalendar();
 }
 
-function displayUpdate(){
-  const local_albums = JSON.parse(localStorage.getItem("local_albums"));
+async function displayUpdate(){
   const selected_date = sessionStorage.getItem("selected_date");
   const select = document.getElementById("select");
-  const current = document.getElementById("current_album");
-  const selected_album = local_albums[selected_date]; 
+  const current_album = document.getElementById("current_album");
+  const selected_album = await albumOfDate(sessionStorage.getItem("selected_date"));
 
   if(selected_album){
-    current.innerHTML = 
+    current_album.innerHTML = 
     `Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b> `;
-    displayAlbum(local_albums[selected_date]);
+    displayAlbum(selected_album);
     select.style.display = "flex";
   }else{
-    current.innerHTML = "";
-    select.style.display = "none";
     document.getElementById("album_cover").innerHTML = "<a href=\'\"><img class=\" \" src=\"\" alt=\"\"></a>";
     document.getElementById("album_table").innerHTML = "";
-    document.getElementById("date").innerHTML = selected_date;
+    document.getElementById("date").innerHTML = selected_date; 
+    current_album.innerHTML = "";
+    select.style.display = "none";
   }
 }
 
@@ -185,45 +259,75 @@ function iconClick(){
   profile.style.display = profile.style.display === "none" ? "flex" : "none";
 }
 
+
+async function addAlbum(album){
+  const selected_date = sessionStorage.getItem("selected_date");
+  const current_album = await albumOfDate(selected_date);
+
+  if(current_album == null){
+    if(localStorage.getItem("authorized") === "true"){
+      fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
+      'method': "POST",
+      'headers': { "Content-Type": "application/json" },
+      'body': JSON.stringify({
+        field: "album",
+        action: "add",
+        data: {
+          album_id: album.id,
+          date:  dayjs(selected_date)
+              }
+        })
+      });
+    }
+  }
+}
+
 async function updateAlbum(){
   const selected_album = JSON.parse(sessionStorage.getItem("selected_album"));
   const selected_date = sessionStorage.getItem("selected_date");
 
   if(selected_album == null){return;}
 
-  let local_albums = JSON.parse(localStorage.getItem("local_albums"));
-
   if(localStorage.getItem("authorized") == "true"){
-    fetch(`http://${SERVER_ADDRESS + NODE_PORT}/album/update`, {
+    fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
-      album: selected_album.id,
-      date:  dayjs(selected_date, "MMM DD, YYYY")
+      field: "album",
+      action: "update",
+      data: {
+        album_id: selected_album.id,
+        date:  dayjs(selected_date)
+      }
     })
-    }).then(async (response) => {
-
-      const access_response = await response.json();
-      console.log(access_response);
-      
-    });
+    })
   }
-  local_albums[selected_date] = selected_album;
-  localStorage.setItem("local_albums", JSON.stringify(local_albums));
-  document.getElementById("current_album").innerHTML = `Current Album: <i>${local_albums[selected_date].name}</i> by <b>${local_albums[selected_date].artists[0].name}</b> `;
-  displayAlbum(local_albums[selected_date]);
+
+  dbAccess("user_albums", {date: selected_date, id:selected_album.id}, "update");
+  displayAlbum(selected_album);
 }
 
 async function resetAlbum(){
-  let local_albums = JSON.parse(localStorage.getItem("local_albums"));
-  displayAlbum(local_albums[sessionStorage.getItem("selected_date")]);
+  displayAlbum();
 }
 
 async function deleteAlbum(){
-  let local_albums = JSON.parse(localStorage.getItem("local_albums"));
-  delete local_albums[sessionStorage.getItem("selected_date")];
-  localStorage.setItem("local_albums", JSON.stringify(local_albums));
-  displayUpdate();
+  if(localStorage.getItem("authorized") == "true"){
+    fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
+    'method': "POST",
+    'headers': { "Content-Type": "application/json" },
+    'body': JSON.stringify({
+      field: "album",
+      action: "delete",
+      data: {
+        date:  dayjs(sessionStorage.getItem("selected_date"))
+      }
+    })
+    })
+  }
+
+  dbAccess("user_albums", sessionStorage.getItem("selected_date"), "delete");
+  displayAlbum();
 }
 
 async function requestAccess(event){
@@ -249,6 +353,7 @@ async function requestAccess(event){
       alert(access_response.error);
     }else{
       access.style.display = "none";
+      localStorage.setItem("current_user", JSON.stringify(access_response));
       localStorage.setItem("authorized", "true");
     }
   });
@@ -315,6 +420,7 @@ async function searchAlbum(){
       for(let i = 0; i < query_result.hits.length; i++){
         album = query_result.hits[i].document;
         presearch[i] = album;
+        dbAccess("albums", album, "add");
         results += `\t<li id=${i}>${album.name} by ${album.artists[0].name}</li>\n`
       }  
     }
@@ -337,44 +443,53 @@ async function getAlbum(event = null) {
     }).then((response) => response.json());
   }
 
-  if(album){
-    let local_albums = JSON.parse(localStorage.getItem("local_albums"));
-    if(local_albums == null){
-      local_albums = {}
-    }
-    if(local_albums[date.innerHTML] == null){
-      local_albums[date.innerHTML] = album;
-      document.getElementById("select").style.display = "flex";
-      localStorage.setItem("local_albums", JSON.stringify(local_albums));
-    }
+  
 
+  if(album.url){
+    await addAlbum(album);
+    dbAccess("user_albums", {date: date.innerHTML, id: album.id}, "add");
+    dbAccess("albums", album, "add");
     sessionStorage.setItem("selected_album", JSON.stringify(album));
     displayAlbum(album);
+  }else{
+    alert("Error in finding album");
   }
 }
 
-function displayAlbum(album){
-  let cover = document.getElementById("album_cover");
+async function displayAlbum(set_album){
+  const selected_date = sessionStorage.getItem("selected_date");
+  document.getElementById("date").innerHTML = selected_date;
+  const current_album = document.getElementById("current_album");
+  const select = document.getElementById("select");
+  
+  const cover = document.getElementById("album_cover");
+  const table = document.getElementById("album_table");
+  
+  const album = set_album || await albumOfDate(sessionStorage.getItem("selected_date"));
 
-  if(album.url == null || album.url == cover.href){
-    alert("Error in finding album");
-    return;
-  }  
+  if(album){
+    cover.innerHTML = `\n<a href=${album.url}><img class="album cover" src="${album.image}" alt="${album.name}"></a>`;
 
-  const album_cover_update = `\n<a href=${album.url}><img class="album cover" src="${album.image}" alt="${album.name}"></a>`;
-  cover.innerHTML = album_cover_update + "\n";
+    let album_table_update = 
+      `\n<tr><th colspan="3">
+      ${dayjs().format("M/D")} - 
+      ${album.name} - <b>
+      ${album.artists[0].name}</b> - <i>
+      ${album.genres.slice(0,3).join(", ")}
+      </i></th></tr>`;
 
-  let album_table_update = 
-    `\n<tr><th colspan="3">
-    ${dayjs().format("M/D")} - 
-    ${album.name} - <b>
-    ${album.artists[0].name}</b> - <i>
-    ${album.genres.slice(0,3).join(", ")}
-    </i></th></tr>`;
+    for (let i = 0; i < album.track_list.length; i++) {
+      album_table_update += `\n<tr><td>${i + 1}</td><td>${album.track_list[i].name}</td></tr>`;
+    }
 
-  for (let i = 0; i < album.track_list.length; i++) {
-    album_table_update += `\n<tr><td>${i + 1}</td><td>${album.track_list[i].name}</td></tr>`;
+    table.innerHTML = album_table_update + "\n";
+    const selected_album = await albumOfDate(selected_date);
+    current_album.innerHTML = `Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b> `;
+    select.style.display = "flex";
+  }else{
+    cover.innerHTML = "<a href=\'\"><img class=\" \" src=\"\" alt=\"\"></a>";
+    table.innerHTML = "";
+    current_album.innerHTML = "";
+    select.style.display = "none";
   }
-
-  document.getElementById("album_table").innerHTML = album_table_update + "\n";
 }

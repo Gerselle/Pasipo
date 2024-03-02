@@ -24,16 +24,16 @@ async function initialize(){
 initialize(); 
 
 async function query(query, values){
-    const client = await pool.connect();
-    let result = {};
-    try{
-        const response = await client.query(query, values);
-        result = response;
-    }catch(error){
-        result = {error: error};
-    }
-    client.release();
-    return result;
+    return new Promise(async (resolve, reject) => {
+        const client = await pool.connect();
+        try{
+            const response = await client.query(query, values);
+            resolve(response);
+        }catch(error){
+            resolve({error: error});
+        }
+        client.release();
+    });
 }
 
 // Pasipo Database
@@ -54,6 +54,25 @@ async function addAlbum(album){
     
     query(album_query, album_values);
 
+}
+
+// User daily album info manipulation
+async function addUserAlbum(user, data){
+    if(!data.date){ return {error: "No date provided for user album addition."}; }
+    if(!data.album_id){ return {error: "No album provided for user album addition."}; }
+    query('INSERT INTO pasipo(user_id, date, album_id) VALUES ($1, $2, $3)', [user.user_id, data.date, data.album_id]);
+}
+
+async function updateUserAlbum(user, data){
+    if(!data.date){ return {error: "No date provided for user album update."}; }
+    if(!data.album_id){ return {error: "No album provided for user album update."}; }
+    deleteUserAlbum(user, data);
+    addUserAlbum(user, data);
+}
+
+async function deleteUserAlbum(user, data){
+    if(!data.date){ return {error: "No date provided for user album deletion."}; } 
+    query('DELETE FROM pasipo WHERE user_id=$1 AND date=$2', [user.user_id, data.date]);
 }
 
 // User Authorization
@@ -95,7 +114,6 @@ async function login(user_name, pass_word){
 
     if(user){
         const hashed_pass_word = await hashPassword(pass_word, user.salt, 64);
-
         if(crypto.timingSafeEqual(hashed_pass_word, user.hashed_pass_word)){
             return user;
         }else{
@@ -107,8 +125,9 @@ async function login(user_name, pass_word){
     
 }
 
-exports.pool = pool
-exports.addAlbum = addAlbum;
-exports.query = query;
-exports.signup = signup;
-exports.login = login;
+module.exports = {
+    pool, 
+    addAlbum,
+    addUserAlbum, updateUserAlbum, deleteUserAlbum,
+    query, signup, login
+};

@@ -231,11 +231,12 @@ a{
   position: absolute;
   right: 2px;
   top: 73px;
-  z-index: 1;
+  z-index: 3;
   background-color: var(--bg-200);
   width: 100dvw;
   max-width: 250px;
   border-radius: 10px;
+  border: solid var(--bg-100) 2px;
 }
 
 .profile .section{
@@ -286,12 +287,12 @@ a{
 .calendar{
   position: absolute;
   /* display: none; */
-  aspect-ratio: 14/11;
   flex-direction: column;
-  width: 90%;
-  min-width: 400px;
+  width: 80%;
+  min-width: 450px;
   max-width: 1500px;
-  max-height: 90%;
+  height: auto;
+  aspect-ratio: 14/11;
   z-index: 1;
   background-color: var(--bg-200);
   border: solid var(--bg-300) 1px;
@@ -370,7 +371,7 @@ a{
 
 .day .num{
   position: absolute;
-  right: 0;
+  right: -3px;
   background-color: var(--bg-100);
   color: var(--text-200);
   font-size: clamp(0.5rem, 2dvw, 2rem);

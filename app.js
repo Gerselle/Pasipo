@@ -33,6 +33,61 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 
+
+function sessionUser(session){
+  let user = {user_id: null};
+  if(session.authenticated && session.user){
+    user = { 
+      user_id : session.user.user_id
+    } 
+  }
+  return user;
+}
+
+app.get('/check', function(req, res){
+  res.send(sessionUser(req.session)); 
+});
+
+app.get('/user_albums', async function(req, res){
+  if(res.session.authenticated){
+
+  }else{
+    res.send({albums: null})
+  }
+});
+
+app.post('/action', function(req, res){
+  const session = req.session;
+  const field = req.body.field;
+  const action = req.body.action;
+  const data = req.body.data;
+
+  if(session.authenticated){
+    switch(field){
+      case "album":
+        switch(action){
+          case "add":
+            res.send(postgres.addUserAlbum(session.user, data));
+            break;
+          case "update":
+            res.send(postgres.updateUserAlbum(session.user, data));
+            break;
+          case "delete":
+            res.send(postgres.deleteUserAlbum(session.user, data));
+            break;
+          default:
+            res.send({error: "No valid album action provided."});
+        }
+
+        break;
+      default:
+        res.send({error: "No update field provided."});
+    }
+  }else{
+    res.send({error: "User is not authenticated."})
+  }
+});
+
 app.get('/:user_name/:year/:month/:day', (req, res) =>{
   
   const {user_name, year, month, day} = req.params;
@@ -50,6 +105,7 @@ app.get('/:user_name/:year/:month/:day', (req, res) =>{
   console.log({ user_name, year, month, day });
   res.send({msg: "Attempt to view user's day."})
 });
+
 
 app.get('/callback', async function(req, res){
   if(req.query.code){
@@ -72,22 +128,13 @@ app.post('/access', async function(req, res) {
     response = await postgres.signup(req.body.user_name, req.body.pass_word, req.body.pass_confirm);
   }
 
+
   if(response.error){
     res.status(403).send(response);
   }else{
     req.session.authenticated = true;
     req.session.user = response;
-    res.send({msg: "Successful login/signup."})
-  }
-});
-
-app.post('/album/:action', async function (req, res){  
-  if(req.session.authenticated){
-    const action = req.params.action;
-    console.log(req.body)
-    console.log(action);
-  }else{
-    res.send({error: "User is not logged in."})
+    res.send(sessionUser(req.session));
   }
 });
 
@@ -99,7 +146,7 @@ app.get('/logout', async function(req, res){
   }else{
     res.sendFile(__dirname + "/frontend/index.html");
   }
-})
+});
 
 app.post('/search', async function(req, res){
   const query = req.body.album_query.toLowerCase();
@@ -118,7 +165,6 @@ app.post('/search', async function(req, res){
     }
   }
 });
-
 
 app.get('/*', (req, res) => {
   res.sendFile(__dirname + "/frontend/index.html");
