@@ -35,13 +35,17 @@ app.use(session({
 
 
 function sessionUser(session){
-  let user = {user_id: null};
+  let response = {user_id: null};
   if(session.authenticated && session.user){
-    user = { 
-      user_id : session.user.user_id
+    const user = session.user;
+    response = { 
+      user_id : user.user_id,
+      profile_image: user.profile_image,
+      profile_name: user.profile_name,
+      viewer_mode: user.viewer_mode
     } 
   }
-  return user;
+  return response;
 }
 
 app.get('/check', function(req, res){
@@ -53,7 +57,6 @@ app.post('/action', async function(req, res){
   const field = req.body.field;
   const action = req.body.action;
   const data = req.body.data;
-
   if(session.authenticated){
     switch(field){
       case "album":
@@ -62,29 +65,22 @@ app.post('/action', async function(req, res){
             res.send(await postgres.pullUserAlbums(session.user));
             break;
           case "push":
-            const conflicts = [];
-            if(data.albums){
-              data.albums.forEach(album_id => async function(){
-                conflicts.push(await postgres.addUserAlbum(session.user, {date: data.date, album_id: album_id}));
-              });
-            }
-            res.send(conflicts);
+            res.send(await postgres.pushUserAlbums(session.user, data));
             break;
           case "add":
-            res.send(postgres.addUserAlbum(session.user, data));
+            res.send(await postgres.addUserAlbum(session.user, data));
             break;
           case "update":
-            res.send(postgres.updateUserAlbum(session.user, data));
+            res.send(await postgres.updateUserAlbum(session.user, data));
             break;
           case "delete":
-            res.send(postgres.deleteUserAlbum(session.user, data));
+            res.send(await postgres.deleteUserAlbum(session.user, data));
             break;
-          
           default:
             res.send({error: "No valid album action provided."});
         }
-
         break;
+
       default:
         res.send({error: "No update field provided."});
     }
@@ -132,7 +128,6 @@ app.post('/access', async function(req, res) {
   }else if(req.body.value === "signup"){
     response = await postgres.signup(req.body.user_name, req.body.pass_word, req.body.pass_confirm);
   }
-
 
   if(response.error){
     res.status(403).send(response);

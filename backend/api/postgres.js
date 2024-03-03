@@ -67,30 +67,57 @@ async function pullUserAlbums(user){
     return albums.rows;
 }
 
+async function pushUserAlbums(user, data){
+    if(!data){ return {error: "No albums provided for user album push."}; } 
+        
+    const conflicts = [];
+
+    for(let i = 0; i < data.length; i++ ){
+        const insert = await addUserAlbum(user, data[i]);
+        if(insert.conflict){
+            conflicts.push(insert.conflict);
+        }
+    }
+
+    if(conflicts.length > 0){
+        return {error: "One or more local albums had conflicts with remote albums.", conflicts: conflicts};
+    }else{
+        return {success: `Albums have be pushed with no conflicts.`};
+    }
+}
+
 async function addUserAlbum(user, data){
     if(!data.date){ return {error: "No date provided for user album addition."}; }
-    if(!data.album_id){ return {error: "No album provided for user album addition."}; }
-    query('INSERT INTO pasipo(user_id, date, album_id) VALUES ($1, $2, $3)', [user.user_id, data.date, data.album_id]);
+    if(!data.id){ return {error: "No album provided for user album addition."}; }
+    const conflict = await query('SELECT album_id FROM pasipo WHERE (user_id, date) = ($1, $2)', [user.user_id, data.date])
+        
+    if(conflict.rows[0] && conflict.rows[0].album_id !== data.id){
+        return {error: `Album already exists for date ${data.date}.`,
+                conflict: {date: data.date, local: data.id, remote: conflict.rows[0].album_id}}
+    }else{
+        await query(`INSERT INTO pasipo(user_id, date, album_id) VALUES ($1, $2, $3)`, [user.user_id, data.date, data.id]);
+        return {success: `Album ${data.id} is added for date ${data.date}.`};
+    }
 }
 
 async function updateUserAlbum(user, data){
     if(!data.date){ return {error: "No date provided for user album update."}; }
-    if(!data.album_id){ return {error: "No album provided for user album update."}; }
-    deleteUserAlbum(user, data);
-    addUserAlbum(user, data);
+    if(!data.id){ return {error: "No album provided for user album update."}; }
+    // deleteUserAlbum(user, data);
+    return addUserAlbum(user, data);
 }
 
 async function deleteUserAlbum(user, data){
-    if(!data.date){ return {error: "No date provided for user album deletion."}; } 
+    if(!data.date){ return {error: "No date provided for user album deletion."}; }
     query('DELETE FROM pasipo WHERE user_id=$1 AND date=$2', [user.user_id, data.date]);
+    return {success: `Album is removed for date ${data.date}.`}
 }
 
 // User Authorization
 async function hashPassword(pass_word, salt, length){
     return new Promise((resolve, reject) => {
-        crypto.scrypt(pass_word, salt, length, async (err, hashed_pass_word) => {
-            if(err) reject(err);
-            else resolve(hashed_pass_word);
+        crypto.scrypt(pass_word, salt, length, (err, hashed_pass_word) => {
+            resolve(hashed_pass_word);
         });
     });
 }
@@ -105,16 +132,14 @@ async function signup(user_name, pass_word, pass_confirm){
 
     const hashed_pass_word = await hashPassword(pass_word, salt, 64);
 
-    const signup = await query('INSERT INTO users(user_name, hashed_pass_word, salt) VALUES ($1, $2, $3)',
-                        [user_name, hashed_pass_word, salt]);
+    const signup = await query('INSERT INTO users(user_name, hashed_pass_word, salt, profile_name) VALUES ($1, $2, $3, $4)',
+                        [user_name, hashed_pass_word, salt, user_name]);
 
     if(signup.error){
         return {error: `Username is already taken, please enter another.`}
     }
 
-    const user = await login(user_name, pass_word);
-    return user;
-
+    return await login(user_name, pass_word);;
 }
 
 async function login(user_name, pass_word){ 
@@ -138,6 +163,7 @@ async function login(user_name, pass_word){
 module.exports = {
     pool, 
     addAlbum, getAlbum,
-    pullUserAlbums, addUserAlbum, updateUserAlbum, deleteUserAlbum,
+    pullUserAlbums, pushUserAlbums, 
+    addUserAlbum, updateUserAlbum, deleteUserAlbum,
     query, signup, login
 };

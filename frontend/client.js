@@ -20,7 +20,6 @@ const date = document.getElementById("date");
 let databaseStorage;
 
 document.addEventListener("DOMContentLoaded", async (event) => {
-
   toggleDarkMode(localStorage.getItem("color_mode"));
   date.innerHTML = dayjs().format("MMM DD, YYYY");
   sessionStorage.setItem("calendar_date", dayjs(date.innerHTML).startOf('month').format("MMM DD, YYYY"));
@@ -28,12 +27,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
   sessionStorage.setItem("selected_album", null);
   if(localStorage.getItem("local_albums") == null){
     localStorage.setItem("local_albums", JSON.stringify({}));
-  }
-
-  fetch(`http://${SERVER_ADDRESS + NODE_PORT}/check`).then(async (response) => {
-    localStorage.setItem("current_user", JSON.stringify(await response.json()));
-  });
-  
+  }  
 });
 
 window.addEventListener("load", async (event) => {
@@ -41,31 +35,46 @@ window.addEventListener("load", async (event) => {
   pullAlbums();
 });
 
+window.onbeforeunload = function(event) {
+
+
+  return 'Please press the Logout button to logout.';
+};
+
 async function pullAlbums(){
-  if(localStorage.getItem("authorized") === "true"){
+
+  fetch(`http://${SERVER_ADDRESS + NODE_PORT}/check`).then(async (response) => {
+    const current_user = JSON.parse(localStorage.getItem("current_user"));
+    const response_user = await response.json();
 
     await dbAccess("user_albums", null, "clear");
+    
+    localStorage.setItem("current_user", JSON.stringify(response_user));
 
-    await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
-    'method': "POST",
-    'headers': { "Content-Type": "application/json" },
-    'body': JSON.stringify({
-      field: "album",
-      action: "pull",
-      })
-    }).then(async (response) => {
-      const user_albums = await response.json();
-      user_albums.forEach(user_album => {
-        dbAccess("user_albums", {date: dayjs(user_album.date).format("MMM DD, YYYY"), id: user_album.album_id}, "add");
+    if(localStorage.getItem("authorized") === "true"){
+      await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
+      'method': "POST",
+      'headers': { "Content-Type": "application/json" },
+      'body': JSON.stringify({
+        field: "album",
+        action: "pull",
+        })
+      }).then(async (response) => {
+        const user_albums = await response.json();
+        user_albums.forEach(user_album => {
+          dbAccess("user_albums", {date: dayjs(user_album.date).format("MMM DD, YYYY"), id: user_album.album_id}, "add");
+        });
       });
-    });
-  }
-  displayAlbum();
+    }
+    displayAlbum();
+  });
 }
 
-async function pushAlbums(albums){
+async function pushAlbums(){
   if(localStorage.getItem("authorized") === "true"){
-    await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
+    const albums =  await dbAccess("user_albums", null, "getAll");
+
+    const response = await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -74,6 +83,8 @@ async function pushAlbums(albums){
       data: albums
       })
     });
+
+    console.log(await response.json());
   }
 }
 
@@ -124,6 +135,9 @@ function dbAccess(store, data, operation = null){
               break;
             case "clear":
               request = objectStore.clear();
+              break;
+            case "getAll":
+              request = objectStore.getAll();
               break;
             default:
               resolve({error: `ObjectStore "${store}" access with invalid operation.`});
@@ -188,8 +202,8 @@ async function updateCalendar(){
   let current = dayjs(sessionStorage.getItem("calendar_date")).startOf('month');
   document.getElementById("months").innerHTML = `${current.format("MMM")}`;
   document.getElementById("years").innerHTML = `${current.format("YYYY")}`;
-
   const calendar_offset = current.day();
+  const calendar_end = (current.daysInMonth() + calendar_offset) <= 35 ? 35 : 42;   
   const month_end = current.endOf('month').add(1, 'day');
   const calendar_days = [];
 
@@ -211,14 +225,14 @@ async function updateCalendar(){
 
   // calendar_offset is the day of the week the first day of the month is.
   const calendar = [];
-  for(let i = calendar_offset; i < calendar_days.length + calendar_offset; i++){
+  for(let i = calendar_offset; i < calendar_end; i++){
     calendar[i] = calendar_days[i - calendar_offset];
   }
 
   const calendar_element = document.getElementById("calendar_dates");
   calendar_element.innerHTML = "";
 
-  for(let i = 0; i < 35; i++){
+  for(let i = 0; i < calendar.length; i++){
     calendar_element.appendChild(dayChild(calendar[i]));
   }
 
@@ -231,7 +245,12 @@ async function updateCalendar(){
       if(day_children.selected){
         day.className = day.className + " focused";
       }
-      
+
+      const num = document.createElement("div");
+      num.setAttribute("class", "num");
+      num.innerHTML = day_children.num;
+  
+      day.appendChild(num);
       if(day_children.name != null){
         const img = document.createElement("img");
         img.setAttribute("src", day_children.image);
@@ -239,11 +258,7 @@ async function updateCalendar(){
         day.appendChild(img);
       }
       
-      const num = document.createElement("div");
-      num.setAttribute("class", "num");
-      num.innerHTML = day_children.num;
-  
-      day.appendChild(num);
+
     }    
 
     return day;
@@ -317,7 +332,7 @@ async function addAlbum(album){
         field: "album",
         action: "add",
         data: {
-          album_id: album.id,
+          id: album.id,
           date:  dayjs(selected_date)
               }
         })
@@ -340,7 +355,7 @@ async function updateAlbum(){
       field: "album",
       action: "update",
       data: {
-        album_id: selected_album.id,
+        id: selected_album.id,
         date:  dayjs(selected_date)
       }
     })
@@ -397,8 +412,11 @@ async function requestAccess(event){
       alert(access_response.error);
     }else{
       access.style.display = "none";
-      localStorage.setItem("current_user", JSON.stringify(access_response));
       localStorage.setItem("authorized", "true");
+      if(JSON.parse(localStorage.getItem("current_user")).user_id == null){ // Local user logged into an account
+        await pushAlbums();
+      }
+      localStorage.setItem("current_user", JSON.stringify(access_response));
       await pullAlbums();
       displayAlbum();
     }
@@ -408,9 +426,11 @@ async function requestAccess(event){
 async function authorize(){
   profile.style.display = "none";
   if(localStorage.getItem("authorized") === "true"){ // Logout if logged in
-    fetch(`http://${SERVER_ADDRESS + NODE_PORT}/logout`).then(() => {
+    pushAlbums();
+    fetch(`http://${SERVER_ADDRESS + NODE_PORT}/logout`).then(() => {   
       localStorage.setItem("authorized", "false");
-      dbAccess("user_albums", null, "clear"); 
+      localStorage.setItem("current_user", JSON.stringify({"user_id": null})); 
+      dbAccess("user_albums", null, "clear");
       displayAlbum();
     });
   }else{ // Open login/signup panel

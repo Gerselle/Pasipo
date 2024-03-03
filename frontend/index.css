@@ -26,7 +26,7 @@
   --filter: invert(64%) sepia(9%) saturate(314%) hue-rotate(244deg) brightness(94%) contrast(89%);
 }
 
-/* Classes for toggling user interaction */
+/* Classes for changing user interaction */
 .no-select{
   -webkit-user-select: none; 
   -ms-user-select: none; 
@@ -46,6 +46,8 @@ html, body{
   background-color: var(--bg-100);
   height: 100%;
   overflow: hidden;
+  scrollbar-width: thin;  
+  scrollbar-color: var(--primary-200) var(--bg-100);   
 }
 
 button{
@@ -79,7 +81,7 @@ a{
 .layout{
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100dvh;
   width: 100dvw;
 }
 
@@ -112,11 +114,11 @@ a{
 }
 
 .access .close{
-   grid-area: 1 / 4 / auto / auto;
-   width: 30px;
-   height: 30px;
-   background: transparent;
-   filter: var(--filter);
+  grid-area: 1 / 4 / auto / auto;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  filter: var(--filter);
 }
 
 .access .info{
@@ -230,7 +232,7 @@ a{
   flex-direction: column;
   position: absolute;
   right: 2px;
-  top: 73px;
+  top: 75px;
   z-index: 3;
   background-color: var(--bg-200);
   width: 100dvw;
@@ -286,66 +288,60 @@ a{
 
 .calendar{
   position: absolute;
-  /* display: none; */
+  display: none;
   flex-direction: column;
-  width: 80%;
+  width: 75dvw;
   min-width: 450px;
   max-width: 1500px;
-  height: auto;
-  aspect-ratio: 14/11;
+  max-height: 90dvh;
+  min-height: 250px;
+  overflow: hidden;
   z-index: 1;
   background-color: var(--bg-200);
   border: solid var(--bg-300) 1px;
-  border-radius: 25px;
-  overflow: hidden;
+  border-radius: 15px;
 }
 
 .calendar .header{
-  width: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  height: calc(100%/11);
+  height: 50px;
   background-color: var(--bg-300);  
 }
 
-.header .panel{
-  display: flex;
-  align-content: center;
-  justify-content: space-evenly;
-  width: 50%;
-}
-
 .calendar .header img{
-  width: 7%;
+  height: 30px;
   cursor: pointer;
   filter: var(--filter);
 }
 
-.calendar .header .close{
-  position: absolute;
-  right: 25px;
-  width: 4%;
-  height: 5%;
-  min-width: 25px;
-  min-height: 25px;
+.calendar .header .panel{
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 75%;
 }
 
-.calendar .header .close img{
+.calendar .header .close{
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -40%);
-  width: 100%;
+  top: 2px;
+  right: 10px;
+  width: 50px;
+  height: 50px;
 }
 
 .header .date{
+  display: flex;
+  justify-content: space-evenly;
+  width: 50%;
   cursor: pointer;
-  font-size: clamp(1rem, 3.25dvw, 3.5rem);
+  font-size: 35px;
 }
 
 .calendar .dates{
   width: 100%;
+  overflow-y: scroll;
   flex-grow: 1;
   display: flex;
   flex-wrap: wrap;
@@ -354,7 +350,8 @@ a{
 .calendar .day{
   position: relative;
   width: calc(100%/7);
-  height: calc(100%/5);
+  aspect-ratio: 1/1;
+  min-height: 50px;
   overflow: hidden;
   border: solid var(--bg-100) 1px;
 } 
@@ -371,14 +368,13 @@ a{
 
 .day .num{
   position: absolute;
-  right: -3px;
+  z-index: 3;
   background-color: var(--bg-100);
   color: var(--text-200);
   font-size: clamp(0.5rem, 2dvw, 2rem);
   text-align: center;
-  height: 25%;
-  width: 30%;
-  border-radius: 0 0 0 25px;
+  width: 1.5em;
+  border-radius: 0 0 5px 0;
 }
 
 .day.clickable{
