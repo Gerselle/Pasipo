@@ -53,11 +53,12 @@ app.get('/check', function(req, res){
 });
 
 app.post('/action', async function(req, res){
-  const session = req.session;
-  const field = req.body.field;
-  const action = req.body.action;
-  const data = req.body.data;
-  if(session.authenticated){
+  if(req.session.authenticated){
+    const session = req.session;
+    const field = req.body.field;
+    const action = req.body.action;
+    const data = req.body.data;
+
     switch(field){
       case "album":
         switch(action){

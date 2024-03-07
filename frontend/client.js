@@ -42,32 +42,25 @@ window.onbeforeunload = function(event) {
 };
 
 async function pullAlbums(){
-
-  fetch(`http://${SERVER_ADDRESS + NODE_PORT}/check`).then(async (response) => {
-    const current_user = JSON.parse(localStorage.getItem("current_user"));
-    const response_user = await response.json();
-
-    await dbAccess("user_albums", null, "clear");
-    
-    localStorage.setItem("current_user", JSON.stringify(response_user));
-
-    if(localStorage.getItem("authorized") === "true"){
-      await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
-      'method': "POST",
-      'headers': { "Content-Type": "application/json" },
-      'body': JSON.stringify({
-        field: "album",
-        action: "pull",
-        })
-      }).then(async (response) => {
-        const user_albums = await response.json();
+  await fetch(`http://${SERVER_ADDRESS + NODE_PORT}/action`, {
+    'method': "POST",
+    'headers': { "Content-Type": "application/json" },
+    'body': JSON.stringify({
+      field: "album",
+      action: "pull",
+      })
+    }).then(async (response) => {
+      const user_albums = await response.json();
+      if(user_albums.error == null){
+        await dbAccess("user_albums", null, "clear");
         user_albums.forEach(user_album => {
-          dbAccess("user_albums", {date: dayjs(user_album.date).format("MMM DD, YYYY"), id: user_album.album_id}, "add");
-        });
+        dbAccess("user_albums", {date: dayjs(user_album.date).format("MMM DD, YYYY"), id: user_album.album_id}, "add");
       });
-    }
-    displayAlbum();
-  });
+      }
+    });
+
+  displayAlbum();
+
 }
 
 async function pushAlbums(){
@@ -240,7 +233,7 @@ async function updateCalendar(){
     let day = document.createElement("div");
     day.className = "day";
     if(day_children){
-      day.setAttribute("onclick", `setDate("${day_children.date}")`);
+      day.setAttribute("date", day_children.date);
       day.className = day.className + " clickable"
       if(day_children.selected){
         day.className = day.className + " focused";
@@ -257,13 +250,22 @@ async function updateCalendar(){
         img.setAttribute("alt", day_children.name);
         day.appendChild(img);
       }
-      
-
     }    
 
     return day;
   }
 }
+
+// Handler for clicking on calendar dates
+document.getElementById("calendar").addEventListener("click", function (event){
+  const day = event.target.closest("div.day");
+  if(day && day.getAttribute("date")){
+    sessionStorage.setItem("selected_album", null);
+    sessionStorage.setItem("selected_date", day.getAttribute("date"));
+    displayAlbum();
+    toggleCalendar();
+  }
+})
 
 function toggleCalendar(){
   const selected_date = sessionStorage.getItem("selected_date");
@@ -271,26 +273,6 @@ function toggleCalendar(){
   const calendar = document.getElementById("calendar");
   calendar.style.display = calendar.style.display === "none" ? "flex" : "none";
   updateCalendar();
-}
-
-async function displayUpdate(){
-  const selected_date = sessionStorage.getItem("selected_date");
-  const select = document.getElementById("select");
-  const current_album = document.getElementById("current_album");
-  const selected_album = await albumOfDate(sessionStorage.getItem("selected_date"));
-
-  if(selected_album){
-    current_album.innerHTML = 
-    `Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b> `;
-    displayAlbum(selected_album);
-    select.style.display = "flex";
-  }else{
-    document.getElementById("album_cover").innerHTML = "<a href=\'\"><img class=\" \" src=\"\" alt=\"\"></a>";
-    document.getElementById("album_table").innerHTML = "";
-    document.getElementById("date").innerHTML = selected_date; 
-    current_album.innerHTML = "";
-    select.style.display = "none";
-  }
 }
 
 function toggleDarkMode(load_mode = null){
@@ -529,35 +511,60 @@ async function displayAlbum(set_album){
   document.getElementById("date").innerHTML = selected_date;
   const current_album = document.getElementById("current_album");
   const select = document.getElementById("select");
-  
   const cover = document.getElementById("album_cover");
   const table = document.getElementById("album_table");
-  
   const album = set_album || await albumOfDate(selected_date);
 
+  const album_artists = document.getElementById("album_artists");
+  const album_title = document.getElementById("album_title");
+  const album_genres = document.getElementById("album_genres");
+
   if(album){
-    cover.innerHTML = `\n<a href=${album.url}><img class="album cover" src="${album.image}" alt="${album.name}"></a>`;
 
-    let album_table_update = 
-      `\n<tr><th colspan="3">
-      ${dayjs().format("M/D")} - 
-      ${album.name} - <b>
-      ${album.artists[0].name}</b> - <i>
-      ${album.genres.slice(0,3).join(", ")}
-      </i></th></tr>`;
+    cover.innerHTML = `\n<a href=${album.url}><img class="cover" src="${album.image}" alt="${album.name}"></a>`;
+    let artists = album.artists[0].name;
 
-    for (let i = 0; i < album.track_list.length; i++) {
-      album_table_update += `\n<tr><td>${i + 1}</td><td>${album.track_list[i].name}</td></tr>`;
+    for(let i = 1; i < album.artists.length; i++){
+      artists += `, ${album.artists[i].name}`;
     }
 
-    table.innerHTML = album_table_update + "\n";
+    album_artists.innerHTML = artists;
+
+    album_title.innerHTML = album.name;
+
+    let genres = album.genres[0] || "No genres";
+    for(let i = 1; i < 3; i++){
+      if(album.genres[i]){
+        genres += `, ${album.genres[i]}`;
+      }
+    } 
+
+    album_genres.innerHTML = genres;
+
+    const tracklist = document.getElementById("album_tracklist");
+    tracklist.innerHTML = "";
+
+    let update = `<tr><th colspan="3" id="album_secret">${dayjs().format("MM/DD")} - ${album.name} - ${album.artists[0].name} - ${album.genres}</th></tr>`;
+
+    for (let i = 0; i < album.track_list.length; i++){
+      update = update + `\t
+        <tr>
+          <td class="num">${i + 1}</td>
+          <td class="title">${album.track_list[i].name}</td>
+          <td class="rating" inert><button>Rating</button></td>
+        </tr>
+      `
+    }
+
+    tracklist.innerHTML = update;
     const selected_album = await albumOfDate(selected_date);
     current_album.innerHTML = `Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b> `;
     select.style.display = "flex";
+    document.getElementById("album").style.display = "flex";
   }else{
-    cover.innerHTML = "<a href=\'\"><img class=\" \" src=\"\" alt=\"\"></a>";
-    table.innerHTML = "";
     current_album.innerHTML = "";
-    select.style.display = "none";
+    document.getElementById("select").style.display = "none";
+    document.getElementById("album").style.display = "none";
   }
 }
+

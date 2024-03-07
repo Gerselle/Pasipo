@@ -103,7 +103,7 @@ async function addUserAlbum(user, data){
 async function updateUserAlbum(user, data){
     if(!data.date){ return {error: "No date provided for user album update."}; }
     if(!data.id){ return {error: "No album provided for user album update."}; }
-    // deleteUserAlbum(user, data);
+    deleteUserAlbum(user, data);
     return addUserAlbum(user, data);
 }
 
