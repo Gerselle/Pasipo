@@ -1,7 +1,7 @@
 const SERVER_ADDRESS = "localhost";
 const NODE_PORT = ":45426";
 const TS_PORT = "8108";
-const TS_KEY = "3jwW1SNDoqkmlxxtOUnvknUNYanh7S4h4TrKCE2791ydg1ep";
+const TS_KEY = "5q1sDWojjFDPdKAE2nz9IGlbdCmBVmo7";
 
 let client = new Typesense.Client({
   'nodes': [{
@@ -25,13 +25,12 @@ document.addEventListener("DOMContentLoaded", async (event) => {
   sessionStorage.setItem("calendar_date", dayjs(date.innerHTML).startOf('month').format("MMM DD, YYYY"));
   sessionStorage.setItem("selected_date", date.innerHTML);
   sessionStorage.setItem("selected_album", null);
-  if(localStorage.getItem("local_albums") == null){
-    localStorage.setItem("local_albums", JSON.stringify({}));
-  }  
 });
 
 window.addEventListener("load", async (event) => {
   await dbStart();
+  fetch(`http://${SERVER_ADDRESS + NODE_PORT}/check`)
+    .then((checked_user) => {sessionStorage.setItem("current_user", checked_user)});
   pullAlbums();
 });
 
@@ -254,6 +253,10 @@ async function updateCalendar(){
 
     return day;
   }
+}
+
+function rating(event){
+  console.log("5/5")
 }
 
 // Handler for clicking on calendar dates
@@ -521,7 +524,7 @@ async function displayAlbum(set_album){
 
   if(album){
 
-    cover.innerHTML = `\n<a href=${album.url}><img class="cover" src="${album.image}" alt="${album.name}"></a>`;
+    cover.innerHTML = `\n<a href=${album.url}><img src="${album.image}" alt="${album.name}"></a>`;
     let artists = album.artists[0].name;
 
     for(let i = 1; i < album.artists.length; i++){
@@ -529,8 +532,10 @@ async function displayAlbum(set_album){
     }
 
     album_artists.innerHTML = artists;
+    album_artists.title = artists;
 
     album_title.innerHTML = album.name;
+    album_title.title = album.name;
 
     let genres = album.genres[0] || "No genres";
     for(let i = 1; i < 3; i++){
@@ -540,25 +545,31 @@ async function displayAlbum(set_album){
     } 
 
     album_genres.innerHTML = genres;
+    album_genres.title = genres;
 
     const tracklist = document.getElementById("album_tracklist");
     tracklist.innerHTML = "";
 
-    let update = `<tr><th colspan="3" id="album_secret">${dayjs().format("MM/DD")} - ${album.name} - ${album.artists[0].name} - ${album.genres}</th></tr>`;
+    let tracklist_update = ""; 
+    // `<tr><th colspan="3" id="album_secret">${dayjs().format("MM/DD")} - ${album.name} - ${album.artists[0].name} - ${album.genres}</th></tr>`;
 
     for (let i = 0; i < album.track_list.length; i++){
-      update = update + `\t
+      tracklist_update = tracklist_update + `\t
         <tr>
           <td class="num">${i + 1}</td>
-          <td class="title">${album.track_list[i].name}</td>
-          <td class="rating" inert><button>Rating</button></td>
+          <td class="title" title="${album.track_list[i].name}">${album.track_list[i].name}</td>
+          <td class="score"><div class="rating"><div class="bg"></div><div class="remove"><div class="stars"></div></div></div></td>
         </tr>
       `
     }
 
-    tracklist.innerHTML = update;
+    tracklist.innerHTML = tracklist_update;
     const selected_album = await albumOfDate(selected_date);
-    current_album.innerHTML = `Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b> `;
+    
+    
+    current_album.title = `${selected_album.name} by ${selected_album.artists[0].name}`
+    current_album.innerHTML =  `Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b> `;
+
     select.style.display = "flex";
     document.getElementById("album").style.display = "flex";
   }else{

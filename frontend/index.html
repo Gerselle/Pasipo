@@ -57,16 +57,16 @@
             <div class="panel">
               <img style="transform:rotate(180deg);" src="images/arrow.svg" onclick="moveMonth(false)">
               <div class="date">
-                  <div id="months">Mar</div>
-                  <div id="years">2024</div>
+                  <div id="months"></div>
+                  <div id="years"></div>
               </div>
               <img src="images/arrow.svg" onclick="moveMonth(true)">
             </div>
 
             <button type="button" class="close"><img src="images/close.svg" onclick="toggleCalendar()"></button>
         </div>
-          <div class="dates" id="calendar_dates"></div>
-        </div>
+          <div class="dates" id="calendar_dates">
+        </div></div>
         
         <div class="current-album" id="current_album"></b> </div>
         <div class="select" id="select" style="display: none;">
@@ -86,8 +86,7 @@
                 <div class="title" id="album_title"></div>
                 <div class="subtitle" id="album_artists"></div>
                 <div class="subtitle" id="album_genres"></div>
-                <button>Rating</button>
-                <button>Notes</button>
+                <div class="rating" onclick="rating(this)"><div class="bg"></div><div class="remove"><div class="stars"></div></div></div>
             </div>
           </div>
           <div class="player">
@@ -95,7 +94,7 @@
           </div>
         </div>
         <div class="tracklist">
-          <table id="album_tracklist"></table>
+          <table id="album_tracklist" style="width: 100%; border-collapse: collapse;"></table>
         </div>
       </div>
     </div> 
