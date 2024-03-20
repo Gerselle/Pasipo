@@ -1,104 +1,48 @@
 <!DOCTYPE html>
-<link rel="stylesheet" href="index.css"> 
+
 <html lang="en">
 
 <head>
+    <link rel="icon" href="data:,">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="title_bar">Pasipo</title>
-    <script src="/client.js" defer></script>
-    <script src="/router.js" defer></script>
-    <script src="/typesense.min.js"></script>
-    <script src="/dayjs.min.js"></script>
+
+    <script src="/js/typesense.min.js"></script>
+    <script src="/js/dayjs.min.js"></script>
+    <script src="/js/router.js" defer></script>
+    <script src="/js/index.js" defer></script>
+    <link rel="stylesheet" href="/css/index.css">
+
+    <script id="content_js"></script>
+    <link id="content_css" rel="stylesheet">
+
+    <script id="focus_js"></script>
+    <link id="focus_css" rel="stylesheet">
+
+    <script type="module" src="/player/player.js" defer></script>
 </head>
 
 <body class="dark">
   <div class="background-blur" id="background_blur" style="display: none">
-    <div class="access" id="access">
-      <b class="title">Log In</b> <button type="button" class="close"><img src="images/close.svg" onclick="toggleAccess()"></button>
-      <div class="info">
-        <input id="user_name" type="text" placeholder="Username/Email">
-        <input id="pass_word" type="password" placeholder="Password">
-        <button onclick="requestAccess(this)" value="login">Login</button>
-      </div>
-      
-      <div class="bottom">
-        <b> Need an account?</b> &nbsp; <a href="/signup">Sign Up</a>      
-      </div>
+    <div class="focus" id="focus">
     </div>
   </div>
     
   <div class="layout">
     <div class="no-select top-bar" id="top_bar">
-      <button type="button" id="menu"><img src="images/menu.svg"></button>
+      <button type="button" id="menu"><img src="/images/menu.svg"></button>
       <div class="search">
         <div class="row">
             <input type="text" id="search_bar" placeholder="Search for an album..." autocomplete="off">
-            <button id="search_button" type="button"><img src="images/search.svg"></button>
+            <button id="search_button" type="button"><img src="/images/search.svg"></button>
         </div>
         <ul id="search_results"></ul>
       </div>
-      <button type="button" class="icon" id="icon" onclick="iconClick()">
-        TEST
-      </button>
+      <button type="button" class="icon" id="icon" onclick="iconClick()"></button>
     </div>
   
-    <div class="content" id="content">    
-
-      <div class="no-select options" id="options">
-        <div class="date"> 
-          <img style="transform:rotate(180deg);" src="images/arrow.svg" onclick="moveDate(false)">
-          <div id="date" style="cursor: pointer;" value="" onclick="toggleCalendar()"></div>
-          <img src="images/arrow.svg" onclick="moveDate(true)">
-        </div>
-
-        <div class="calendar" id="calendar" style="display: none;">
-          <div class="header">
-            <div class="panel">
-              <img style="transform:rotate(180deg);" src="images/arrow.svg" onclick="moveMonth(false)">
-              <div class="date">
-                  <div id="months"></div>
-                  <div id="years"></div>
-              </div>
-              <img src="images/arrow.svg" onclick="moveMonth(true)">
-            </div>
-
-            <button type="button" class="close"><img src="images/close.svg" onclick="toggleCalendar()"></button>
-        </div>
-          <div class="dates" id="calendar_dates">
-        </div></div>
-        
-        <div class="current-album" id="current_album"></b> </div>
-        <div class="select" id="select" style="display: none;">
-          <button type="button" onclick="updateAlbum()" id="album_update"> Update </button>
-          <button type="button" onclick="resetAlbum()"> Reset </button>
-          <button type="button" onclick="deleteAlbum()"> Delete </button>
-        </div>
-      </div>
-
-      <div class="album" id="album" style="display: none;">
-        <div class="header">
-          <div class="info">
-            <div class="cover" id="album_cover">
-                <a href=""><img class="cover" src="" alt=""></a>
-            </div>
-            <div class="description">
-                <div class="title" id="album_title"></div>
-                <div class="subtitle" id="album_artists"></div>
-                <div class="subtitle" id="album_genres"></div>
-                <div class="rating" onclick="rating(this)"><div class="bg"></div><div class="remove"><div class="stars"></div></div></div>
-            </div>
-          </div>
-          <div class="player">
-            Player
-          </div>
-        </div>
-        <div class="tracklist">
-          <table id="album_tracklist" style="width: 100%; border-collapse: collapse;"></table>
-        </div>
-      </div>
-    </div> 
-    
+    <div class="content" id="content"></div>
     <div class="profile" id="profile" style="display: none;">
       <div class="section" id="settings">
           <button type="button">Settings</button>

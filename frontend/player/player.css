@@ -1,0 +1,93 @@
+.p-background{
+  display: flex;
+  width: 100%;
+  height: fit-content;
+  min-width: 350px;
+}
+
+.p-title{
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap; 
+  height: 20%;
+  padding: 10px;
+  background-color: var(--bg-200);
+}
+
+.p-control-bar{
+  width: 100%;
+  height: fit-content;
+  display: flex;
+  background-color: var(--bg-300);
+}
+
+.p-buttons{
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100px;
+}
+
+.p-button{
+  cursor: pointer;
+  width: 33%;
+  aspect-ratio: 1/1;
+  border-radius: 100%;
+  filter: var(--filter);
+}
+
+.p-scrobble{
+  flex-grow: 1;
+  max-height: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.p-bar{
+  cursor: pointer;
+  position: relative;
+  flex-grow: 1;
+  height: 15%;
+  background-color: var(--bg-200);
+}
+
+.p-dot{
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  left: 0%;
+  width: 15px;
+  aspect-ratio: 1/1;
+  border-radius: 100%;
+  background-color: var(--bg-200);
+}
+
+.p-time{
+  font-size: clamp(0.1em, 1dvh, 2em);;
+  cursor: default;
+  display: flex;
+  width: fit-content;
+  padding: 3px;
+  margin: 5px;
+  align-items: center;
+  justify-content: center;
+}
+
+.p-volume{
+  display: flex;
+  align-items: center;
+  width: 150px;
+}
+
+.p-button.volume{
+  width: 25%;
+}
+
+.p-dot.volume{
+  width: 15%;
+  min-width: 10px;
+  max-width: 20px;
+}
+

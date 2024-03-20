@@ -1,25 +1,25 @@
 // Modules for node express requests/responses
-const express = require('express');
+const express = require("express");
 const path = require("path");
-const cors = require('cors');
+const cors = require("cors");
 
 // Module for .env variables
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 dotenv.config();
 
 // Custom modules for API calls
-const spotify = require('./backend/api/spotify.js');
-const postgres = require('./backend/api/postgres.js');
-const typesense = require('./backend/api/typesense.js');
+const spotify = require("./backend/api/spotify.js");
+const postgres = require("./backend/api/postgres.js");
+const typesense = require("./backend/api/typesense.js");
 
 // Custom modules for user authentication/sessions
 const session = require("express-session");
 const sessionStore = require("connect-pg-simple")(session);
 
 const app = express();
+app.use(express.static(path.join(__dirname, 'frontend')));
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'frontend'), {index: false}));
 
 app.use(session({
   store: new sessionStore({
@@ -35,12 +35,13 @@ app.use(session({
 
 
 function sessionUser(session){
-  let response = {user_id: null};
+  let response = {user_id: null, user_name: "local"};
   if(session.authenticated && session.user){
     const user = session.user;
     response = { 
       user_id : user.user_id,
       profile_image: user.profile_image,
+      user_name: user.user_name,
       profile_name: user.profile_name,
       viewer_mode: user.viewer_mode
     } 
@@ -48,11 +49,20 @@ function sessionUser(session){
   return response;
 }
 
-app.get('/check', function(req, res){
+app.get("/check", function(req, res){
   res.send(sessionUser(req.session)); 
 });
 
-app.post('/action', async function(req, res){
+app.get("/viewing/:viewed_user", async function(req, res){
+  const current_user = req.session.user ? req.session.user.user_name : "local";
+  res.send(await postgres.getViewedUser(req.params.viewed_user, current_user));
+});
+
+app.get("/album_id/:id", async function(req, res){
+  res.send(await postgres.getAlbum(req.params.id));
+});
+
+app.post("/action", async function(req, res){
   if(req.session.authenticated){
     const session = req.session;
     const field = req.body.field;
@@ -82,6 +92,22 @@ app.post('/action', async function(req, res){
         }
         break;
 
+      case "rating":
+        switch(action){
+          case "pull":
+            res.send(await postgres.pullUserRatings(session.user));
+            break;
+          case "push":
+            res.send(await postgres.pushUserRatings(session.user, data));
+            break;
+          case "update":
+            res.send(await postgres.updateUserRating(session.user, data));
+            break;
+          default:
+            res.send({error: "No valid rating action provided."});
+        }
+        break;
+
       default:
         res.send({error: "No update field provided."});
     }
@@ -90,38 +116,20 @@ app.post('/action', async function(req, res){
   }
 });
 
-app.get('/:user_name/:year/:month/:day', (req, res) =>{
-  
-  const {user_name, year, month, day} = req.params;
-  if(req.session.user){
-    if(req.session.user.user_name == user_name){
 
-    }else{ // User is looking at another user
-      
-    }
-
-  }else{ // Guest user
-    res.send({msg: `Guest user viewing ${user_name}'s `});
-  } 
-
-  console.log({ user_name, year, month, day });
-  res.send({msg: "Attempt to view user's day."})
-});
-
-
-app.get('/callback', async function(req, res){
+app.get("/callback", async function(req, res){
   if(req.query.code){
-    // Add this user's token to the database
+    // Add this user"s token to the database
     user = await spotify.authorize(req.query.code);
   }
   res.redirect("/");
 });
 
-app.get('/spotify', function(req, res) {
+app.get("/spotify", function(req, res) {
   res.redirect(process.env.authorization_request);
 });
 
-app.post('/access', async function(req, res) {
+app.post("/access", async function(req, res) {
   let response = {error: "Issue with login/signup."};
 
   if(req.body.value === "login"){
@@ -139,17 +147,17 @@ app.post('/access', async function(req, res) {
   }
 });
 
-app.get('/logout', async function(req, res){
+app.get("/logout", async function(req, res){
   if(req.session.authenticated){
     req.session.destroy(function(err){
-      res.clearCookie('connect.sid', {path: "/"}).send('Cleared session cookie.');
+      res.clearCookie("connect.sid", {path: "/"}).send(sessionUser(session));
     });
   }else{
-    res.sendFile(__dirname + "/frontend/index.html");
+    res.redirect("/");
   }
 });
 
-app.post('/search', async function(req, res){
+app.post("/search", async function(req, res){
   const query = req.body.album_query.toLowerCase();
   const check_ts = await typesense.query(query);
   
@@ -167,13 +175,24 @@ app.post('/search', async function(req, res){
   }
 });
 
-app.get('/album_id/:id', async function(req, res){
-  res.send(await postgres.getAlbum(req.params.id));
-});
 
-app.get('/*', (req, res) => {
-  res.sendFile(__dirname + "/frontend/index.html");
+app.get("/*", (req, res) => {
+  const parts = req.url.split("/");
+  switch(parts[1]){
+    case "templates":
+      res.sendFile(__dirname + "/frontend/templates/404.html");
+      break;
+    case "js":
+      res.sendFile(__dirname + "/frontend/js/404.js"); 
+      break;
+    case "css": 
+      res.sendFile(__dirname + "/frontend/css/404.css");
+      break;
+    default:  
+      console.log(req.url);
+      res.sendFile(__dirname + "/frontend/index.html");
+  }
 });
 
 const port = process.env.server_port;
-app.listen(port, '0.0.0.0', () => console.log(`Listening at address ${process.env.server_ip} on port ${port}.`));
+app.listen(port, "0.0.0.0", () => console.log(`Listening at address ${process.env.server_ip} on port ${port}.`));
