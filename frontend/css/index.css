@@ -46,7 +46,7 @@
   padding:0px;
   margin: 0;
   box-sizing: border-box;
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, monospace;
   color: var(--text-100);
 }
 

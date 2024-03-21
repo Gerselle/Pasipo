@@ -14,11 +14,13 @@ document.addEventListener("player", (event) => {
 
 function playerUpdate(event){
   const target = event.target.closest('[id]');
+  console.log(target)
   switch(target){
     case p_play: playTrack(); break;
     case p_next: nextSong(); break;
     case p_prev: prevSong(); break;
     case p_scr_bar: setTime(event); break;
+    case p_progress: setTime(event); break;
     default: break;
   }
 }
@@ -40,17 +42,22 @@ function setTime(event){
   track_time = (p_track.length/1000) * click_pos_ratio;
   track_pos = 100 * click_pos_ratio;
   p_start.innerHTML = dayjs(0).second(track_time).format("mm:ss");
-  p_scr_dot.style.left = `${track_pos}%`;
-  moveDot();
+  p_progress.style.width = `${track_pos}%`;
+  moveProgress();
 }
 
-function setTrack(track_num){
+function setTrack(track_num, autoplay = true){
   p_track = p_track_list[track_num];
-  p_title.innerHTML = `Disc ${p_track.disc} | Track ${p_track.number} | ${p_track.name}`;
+
+  const p_titles = document.getElementsByClassName("p-title");
+  for(let i = 0; i < p_titles.length; i++){
+    p_titles[i].innerHTML = `Disc ${p_track.disc} | Track ${p_track.number} | ${p_track.name}`;
+  }
+  
   p_start.innerHTML = "00:00";
   p_end.innerHTML = dayjs(p_track.length, "sss").format("mm:ss");
   stopTrack(true);
-  playTrack();
+  if(autoplay) { playTrack(); }
   return p_track;
 }
 
@@ -59,7 +66,7 @@ function stopTrack(reset = false){
     p_start.innerHTML = "00:00";
     track_time = 0;
     track_pos = 0;
-    p_scr_dot.style.left = `${track_pos}%`;
+    p_progress.style.width = `${track_pos}%`;
   }
 
   clearTimeout(track_playing);
@@ -69,8 +76,8 @@ function stopTrack(reset = false){
 
 function playTrack(){
   if(p_play.children[0].alt == "play"){
-    moveDot();
-    track_playing = setInterval(moveDot, 1000);
+    if(track_time == 0){ moveProgress(); }
+    track_playing = setInterval(moveProgress, 1000);
   }else{
     stopTrack();
   }
@@ -83,15 +90,15 @@ function updatePlayButton(){
   button_img.src = `/player/${button_img.alt}.svg`;
 }
 
-function moveDot(){
+function moveProgress(){
   if(track_pos >= 100 || track_time >= p_track.length / 1000){
     clearInterval(track_playing);
-    p_scr_dot.style.left = "100%";
+    p_progress.style.width = "100%";
     p_start.innerHTML = dayjs(p_track.length, "sss").format("mm:ss");
     nextSong();
   }else{
     track_pos = 100 * (track_time / (p_track.length/1000));
-    p_scr_dot.style.left = `${track_pos}%`;
+    p_progress.style.width = `${track_pos}%`;
     p_start.innerHTML = dayjs(0).second(track_time).format("mm:ss");
     track_time ++;
   }
@@ -106,11 +113,7 @@ async function loadAlbum(load_album){
   }
 
   if(load_album){
-    p_track = load_album.track_list[0];
-    p_title.innerHTML = `Disc ${p_track.disc} | Track ${p_track.number} | ${p_track.name}`;
-    p_start.innerHTML = "00:00";
-    p_end.innerHTML = dayjs(p_track.length, "sss").format("mm:ss");
     p_track_list = load_album.track_list;
-    stopTrack(true);
+    setTrack(0, false);
   }
 }
