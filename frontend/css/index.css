@@ -190,7 +190,7 @@ a:hover{
 /* Search bar within the top_bar section */
 
 .search{
-  z-index: 1;
+  z-index: 3;
   position: relative;
   display: flex;
   align-items: center;

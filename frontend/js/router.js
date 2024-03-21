@@ -10,10 +10,10 @@ document.addEventListener("click", (e) => {
 });
 
 const ENV = {
-  SERVER_ADDRESS : "localhost",
+  SERVER_ADDRESS : "104.231.13.6",
   NODE_PORT : ":45426",
   TS_PORT : "8108",
-  TS_KEY : "5q1sDWojjFDPdKAE2nz9IGlbdCmBVmo7",
+  TS_KEY : "V1bpY0TqBLmsbYSGgzp7BXGzWRGtcYRa",
 }
 
 const TS_CLIENT = new Typesense.Client({

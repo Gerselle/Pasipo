@@ -10,9 +10,9 @@ document.addEventListener("update", async (update) => {
     update.detail.start ? start() : parseDayPath();
     update.detail.start = false;
   }else if (update.detail.script === "player") {
-    const track = update.detail.track;
+    const track_num = update.detail.track_num;
     if( playing_row ){ playing_row.classList.remove("playing"); }
-    playing_row = album_tracklist.querySelector(`[track="${track.number - 1}"]`);
+    playing_row = album_tracklist.querySelector(`[track="${track_num}"]`);
     playing_row.classList.add("playing");
   }
 })

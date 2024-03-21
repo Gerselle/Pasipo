@@ -81,7 +81,7 @@ function playTrack(){
     stopTrack();
   }
 
-  sendEvent(updateJS, {script: "player", track: p_track});
+  sendEvent(updateJS, {script: "player", track_num: p_track_list.indexOf(p_track)});
   updatePlayButton();
 }
 
