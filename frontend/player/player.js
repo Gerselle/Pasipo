@@ -14,7 +14,6 @@ document.addEventListener("player", (event) => {
 
 function playerUpdate(event){
   const target = event.target.closest('[id]');
-  console.log(target)
   switch(target){
     case p_play: playTrack(); break;
     case p_next: nextSong(); break;
@@ -81,6 +80,8 @@ function playTrack(){
   }else{
     stopTrack();
   }
+
+  sendEvent(updateJS, {script: "player", track: p_track});
   updatePlayButton();
 }
 

@@ -40,7 +40,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  height: 90%;
+  height: 100%;
   width: 100%;
   background-color: var(--bg-100);
 }
@@ -89,27 +89,26 @@
 }
 
 .p-progress{
-  position: absolute;
-  z-index: 1;
   height: 100%;
-  background-color: var(--bg-100);
+  background-color: var(--bg-200);
 }
 
 .p-title {
-  display: flex;
-  height: 100%;
-  padding: 3px;
-  color: var(--text-200);
-  font-size: var(--default-font);
+  position: absolute;
+  z-index: 1;
   width: 100%;
-}
-
-.p-progress .p-title{
-  background-color: var(--bg-200);
-  text-overflow: clip;
+  left: 1%;
+  display: block;
+  color: var(--text-200);
+  font-size: var(--small-font);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .p-bar.scrobble{
-  width: 100%;
   overflow: hidden;
+  margin: 10px;
+  height: 90%;
+  width: 100%;
 }

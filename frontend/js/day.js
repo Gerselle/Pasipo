@@ -2,16 +2,20 @@ async function start(){
   await parseDayPath();
   dayListeners();
 }
+let hover_row;
+let playing_row;
 
 document.addEventListener("update", async (update) => {
   if(update.detail.script === "day"){
     update.detail.start ? start() : parseDayPath();
     update.detail.start = false;
+  }else if (update.detail.script === "player") {
+    const track = update.detail.track;
+    if( playing_row ){ playing_row.classList.remove("playing"); }
+    playing_row = album_tracklist.querySelector(`[track="${track.number - 1}"]`);
+    playing_row.classList.add("playing");
   }
 })
-
-let hover_row;
-let playing_row;
 
 docId("album_tracklist").addEventListener("click", (event) => {
   const row = event.target.closest("tr");
