@@ -25,11 +25,11 @@ function playerUpdate(event){
 }
 
 function nextSong(){
-  p_track = p_track == p_track_list[p_track_list.length - 1] ? setTrack(0) : setTrack(p_track.number);
+  p_track = p_track == p_track_list[p_track_list.length - 1] ? setTrack(0) : setTrack(p_track_list.indexOf(p_track) + 1);
 }
 
 function prevSong(){
-  p_track = p_track == p_track_list[0] ? setTrack(p_track_list.length - 1) : setTrack(p_track.number - 2);
+  p_track = p_track == p_track_list[0] ? setTrack(p_track_list.length - 1) : setTrack(p_track_list.indexOf(p_track) - 1);
 }
 
 let track_playing = null;
