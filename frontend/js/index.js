@@ -9,10 +9,35 @@ document.addEventListener("DOMContentLoaded", async (event) => {
   });
 });
 
-function updateIndex(){
-  updateJS.detail.script = docId("content").value;
-  document.dispatchEvent(updateJS);
- }
+// Simple helper functions
+function updateContent(){ sendEvent(updateJS, {script: docId("content").value}); }
+function sessionGet(key){return sessionStorage.getItem(key)};
+function sessionSet(key, value){return sessionStorage.setItem(key, value)};
+function localGet(key){return localStorage.getItem(key)};
+function localSet(key, value){return localStorage.setItem(key, value)};
+
+function debounce(func, timeout) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func.apply(this, args);
+    }, timeout);
+  };
+}
+
+function throttle(func, timeout) {
+  let throttling = false;
+  return (...args) => {
+    if (!throttling) {
+      throttling = true;
+      func.apply(this, args);
+      setTimeout(() => {
+        throttling = false;
+      }, timeout);
+    }
+  };
+}
 
 function toggleDarkMode(load_mode = null){
   const old_mode =  localStorage.getItem("color_mode");
@@ -22,7 +47,7 @@ function toggleDarkMode(load_mode = null){
  
   // Updates profile color mode button
   const update = new_mode === "dark" ? "Light Mode" : "Dark Mode";
-  docId("mode").innerHTML = update; 
+  docId("mode").innerHTML = update;
 }
 
 function iconClick(){
@@ -61,19 +86,6 @@ function dbStart(){
       db.createObjectStore("user_ratings", {keyPath: "id"});
     }
   });
-}
-
-function sessionGet(key){return sessionStorage.getItem(key)};
-function sessionSet(key, value){return sessionStorage.setItem(key, value)};
-
-function debounce(func, timeout) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      func.apply(this, args);
-    }, timeout);
-  };
 }
 
 function dbAccess(store, data, operation = null){
@@ -166,7 +178,7 @@ async function authorize(){
         const local = await response.json();
         sessionStorage.setItem("current_user", JSON.stringify(local)); 
         clearUser();
-        updateIndex();
+        updateContent();
       });
   }else{ // Open login/signup panel
     toggleAccess();
@@ -230,7 +242,7 @@ async function pullUser(){
       }
     });
 
-    updateIndex();
+    updateContent();
 }
 
 async function pushUser(){

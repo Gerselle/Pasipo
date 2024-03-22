@@ -1,7 +1,8 @@
 async function start(){
   await parseDayPath();
-  dayListeners();
+  await dayListeners();
 }
+
 let hover_row;
 let playing_row;
 
@@ -57,6 +58,7 @@ async function parseDayPath(){
   sessionSet("calendar_date", today.startOf('month').format("MMM DD, YYYY"));
   sessionSet("selected_album", null);
   updateAlbum();
+  updateCalendar();
 }
 
 function dayListeners(){
