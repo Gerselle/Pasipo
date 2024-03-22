@@ -13,7 +13,7 @@ const ENV = {
   SERVER_ADDRESS : "localhost",
   NODE_PORT : ":45426",
   TS_PORT : "8108",
-  TS_KEY : "5q1sDWojjFDPdKAE2nz9IGlbdCmBVmo7",
+  TS_KEY : "LfdaROHpKBU4o5SE6hK9jOpsw4woA4tf",
 }
 
 const TS_CLIENT = new Typesense.Client({
