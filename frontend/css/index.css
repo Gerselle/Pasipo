@@ -287,9 +287,14 @@ a:hover{
 
 /* Transition from landscape to portrait */
 @media (max-aspect-ratio: 1) {
-
   :root{
     --default-font: clamp(1em, 2dvw, 2em);
+  }
+}
+
+@media (max-width: 400px){
+  .row button{
+    display: none;
   }
 }
 

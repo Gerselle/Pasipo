@@ -189,7 +189,6 @@ app.get("/*", (req, res) => {
       res.sendFile(__dirname + "/frontend/css/404.css");
       break;
     default:  
-      console.log(req.url);
       res.sendFile(__dirname + "/frontend/index.html");
   }
 });

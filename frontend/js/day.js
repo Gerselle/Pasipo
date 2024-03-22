@@ -56,7 +56,7 @@ async function parseDayPath(){
   sessionSet("selected_date", today.format("MMM DD, YYYY"));
   sessionSet("calendar_date", today.startOf('month').format("MMM DD, YYYY"));
   sessionSet("selected_album", null);
-  update();
+  updateAlbum();
 }
 
 function dayListeners(){
@@ -150,7 +150,7 @@ async function moveDate(increment){
   date.innerHTML = selected_date.format("MMM DD, YYYY");
   sessionSet("selected_date", date.innerHTML);
 
-  update();
+  updateAlbum();
 }
 
 async function moveMonth(increment){
@@ -164,7 +164,7 @@ async function setDate(value){
   // Require user to select a new album for each date
   sessionSet("selected_album", null);
   sessionSet("selected_date", value);
-  update();
+  updateAlbum();
   toggleCalendar();
 }
 
@@ -242,7 +242,7 @@ async function updateCalendar(){
 }
 
 function toggleCalendar(){
-  update();
+  updateAlbum();
   const selected_date = sessionGet("selected_date");
   sessionSet("calendar_date", dayjs(selected_date).startOf('month').format("MMM DD, YYYY"));
   updateCalendar();
@@ -272,7 +272,7 @@ async function addAlbum(album){
   }
 }
 
-async function updateAlbum(){
+async function sendAlbumUpdate(){
   const selected_album = JSON.parse(sessionGet("selected_album"));
   const selected_date = sessionGet("selected_date");
 
@@ -294,14 +294,10 @@ async function updateAlbum(){
   }
 
   dbAccess("user_albums", {date: selected_date, id:selected_album.id}, "update");
-  update(selected_album);
+  updateAlbum(selected_album);
 }
 
-async function resetAlbum(){
-  update();
-}
-
-async function deleteAlbum(){
+async function sendAlbumDelete(){
   if(userLoggedIn()){
     fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
     'method': "POST",
@@ -317,7 +313,7 @@ async function deleteAlbum(){
   }
 
   dbAccess("user_albums", sessionGet("selected_date"), "delete");
-  update();
+  updateAlbum();
 }
 
 // Search html
@@ -386,13 +382,13 @@ async function searchAlbum(event = null) {
     dbAccess("user_albums", {date: sessionGet("selected_date"), id: album.id}, "add");
     dbAccess("albums", album, "add");
     sessionSet("selected_album", JSON.stringify(album));
-    update(album);
+    updateAlbum(album);
   }else{
     alert("Error in finding album");
   }
 }
 
-async function update(set_album){
+async function updateAlbum(set_album = null){
   docId("album").style.display = "none";
   const options_panel = docId("select");
   options_panel.style.display = "none";
@@ -410,10 +406,17 @@ async function update(set_album){
   let rating;
 
   if(viewed_user.is_current_user){
-    album = set_album || await albumOfDate(selected_date);
-    current_album.innerHTML = album ? `<span>Current Album: <i>${album.name}</i> by <b>${album.artists[0].name}</b></span>` : "";
-    current_album.style.display = album ? "flex" : "none";
-    options_panel.style.display = album ? "flex" : "none";
+    if(set_album){
+      album = set_album;
+      selected_album = await albumOfDate(selected_date);
+      if(selected_album && selected_album.id !== album.id){
+        current_album.innerHTML = selected_album ? `<span>Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b></span>` : "";
+        current_album.style.display = selected_album ? "flex" : "none";
+        options_panel.style.display = selected_album ? "flex" : "none"; 
+      }
+    }else{
+      album = await albumOfDate(selected_date);
+    }
     user_rating = album ? await dbAccess("user_ratings", album.id, "get") : null;
     rating = user_rating ? user_rating.rating : null;
   }else{
@@ -441,12 +444,14 @@ tracks.addEventListener("dragend", () => {tracks.classList.remove("draggable"); 
 async function displayAlbum(album){
 
   if(album){
-    const album_cover = docId("album_cover");
+    const album_img = docId("album_img");
     const album_artists = docId("album_artists");
     const album_title = docId("album_title");
     const album_genres = docId("album_genres");
   
-    album_cover.innerHTML = `\n<a href=${album.url}><img class="cover" src="${album.image}" alt="${album.name}"></a>`;
+    album_img.href = album.url;
+    album_img.innerHTML = `
+      \n<img src="${album.image}" alt="${album.name}">`;
     
     let artists = "";
 

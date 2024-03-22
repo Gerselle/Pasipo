@@ -23,23 +23,23 @@
   
   <div class="current-album" id="current_album"></div>
   <div class="select" id="select" style="display: none;">
-    <button type="button" onclick="updateAlbum()" id="album_update"> Update </button>
-    <button type="button" onclick="resetAlbum()"> Reset </button>
-    <button type="button" onclick="deleteAlbum()"> Delete </button>
+    <button type="button" onclick="sendAlbumUpdate()" id="album_update"> Update </button>
+    <button type="button" onclick="updateAlbum()"> Reset </button>
+    <button type="button" onclick="sendAlbumDelete()"> Delete </button>
   </div>
 </div>
 
 <div class="album" id="album" style="display: none;">
   <div class="header">
     <div class="info">
-      <div class="cover" id="album_cover">
-          <a href=""><img class="cover" src="" alt=""></a>
+      <div class="cover">
+          <a class="image" id="album_img"><img src="" alt=""></a>
+          <div class="rating" id="album_rating"><div class="bg"></div><div class="add" id="rating_level"><div class="stars"></div></div></div>
       </div>
       <div class="description">
           <a class="title" id="album_title"></a>
           <div class="subtitle" id="album_artists"></div>
           <div class="subtitle" id="album_genres"></div>
-          <div class="rating" id="album_rating"><div class="bg"></div><div class="add" id="rating_level"><div class="stars"></div></div></div>
       </div>
     </div>
     <div class="no-select player" id="album_player"></div>
