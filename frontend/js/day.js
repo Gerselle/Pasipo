@@ -3,7 +3,6 @@ async function start(){
   await dayListeners();
 }
 
-let hover_row;
 let playing_row;
 
 document.addEventListener("update", async (update) => {
@@ -20,16 +19,10 @@ document.addEventListener("update", async (update) => {
 
 docId("album_tracklist").addEventListener("click", (event) => {
   const row = event.target.closest("tr");
-  if(row.className == "hover"){
-    if( playing_row ){ playing_row.classList.remove("playing"); }
-    playing_row = row;
-    row.classList.add("playing");
-    sendEvent(playerEvent, {action: "setTrack", data: row.getAttribute("track")});
-  }else{
-    if(hover_row){ hover_row.classList.remove("hover"); }
-    hover_row = row;
-    row.classList.add("hover");
-  }
+  if( playing_row ){ playing_row.classList.remove("playing"); }
+  playing_row = row;
+  row.classList.add("playing");
+  sendEvent(playerEvent, {action: "setTrack", data: row.getAttribute("track")});
 });
 
 

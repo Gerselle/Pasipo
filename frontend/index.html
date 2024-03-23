@@ -44,15 +44,10 @@
   
     <div class="content" id="content"></div>
     <div class="profile" id="profile" style="display: none;">
-      <div class="section" id="settings">
-          <button type="button">Settings</button>
-      </div>
-      <div class="section" id="dark_mode">
-          <button type="button"><div onclick="toggleDarkMode()" id="mode">Light Mode</div></button>
-      </div>      
-      <div class="section" id="logout">
-          <button type="button" onclick="authorize()" id="authorize">Logout</button>
-      </div>
+      <div class="section"><button type="button" onclick="getToken()">Spotify</button></div>
+      <div class="section"><button type="button">Settings</button></div>
+      <div class="section"><button type="button"><div onclick="toggleDarkMode()" id="mode">Light Mode</div></button></div>      
+      <div class="section"><button type="button" onclick="authorize()" id="authorize">Logout</button></div>
     </div>
   </div>
   

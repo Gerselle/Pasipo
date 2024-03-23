@@ -163,7 +163,7 @@ async function requestAccess(event){
       if(!userLoggedIn()){ // Local user logged into an account
         pushUser();
       }
-      sessionStorage.setItem("current_user", JSON.stringify(access_response));
+      sessionSet("current_user", JSON.stringify(access_response));
       pullUser();
     }
   });
@@ -176,7 +176,7 @@ async function authorize(){
     fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/logout`)
       .then(async (response) => {   
         const local = await response.json();
-        sessionStorage.setItem("current_user", JSON.stringify(local)); 
+        sessionSet("current_user", JSON.stringify(local)); 
         clearUser();
         updateContent();
       });
@@ -185,8 +185,20 @@ async function authorize(){
   }
 }
 
+async function getToken(){
+  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth`)
+    .then(async (response) => {
+      const redirect = await response.json();
+      if(redirect.error){
+        alert(redirect.error);
+      }else{
+        window.location.href = redirect.url;
+      }
+    });
+}
+
 function userLoggedIn(){
-  return JSON.parse(sessionStorage.getItem("current_user")).user_id ? true : false;
+  return JSON.parse(sessionGet("current_user")).user_id ? true : false;
 }
 
 function clearUser(){

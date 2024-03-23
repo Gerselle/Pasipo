@@ -286,18 +286,10 @@
 }
 
 .tracklist .playing{
-  background-color: var(--primary-200);
-}
-
-.playing {
-  color: lightgray;
-}
-
-.tracklist .hover{
   background-color: var(--bg-100);
 }
 
-.tracklist tr:not(.hover):hover{
+.tracklist tr:not(.playing):hover{
   background-color: var(--bg-200);
 }
 

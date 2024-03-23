@@ -34,23 +34,27 @@ app.use(session({
 }));
 
 
-function sessionUser(session){
+async function sessionUser(session){
   let response = {user_id: null, user_name: "local"};
   if(session.authenticated && session.user){
-    const user = session.user;
-    response = { 
-      user_id : user.user_id,
-      profile_image: user.profile_image,
-      user_name: user.user_name,
-      profile_name: user.profile_name,
-      viewer_mode: user.viewer_mode
-    } 
+    const user = await postgres.refreshUser(session.user);
+    if(!user.error){
+      session.user = user;
+      response = {
+        user_id : user.user_id,
+        profile_image: user.profile_image,
+        user_name: user.user_name,
+        profile_name: user.profile_name,
+        viewer_mode: user.viewer_mode
+        // ,token: user.spotify_token
+      }
+    };
   }
   return response;
 }
 
-app.get("/check", function(req, res){
-  res.send(sessionUser(req.session)); 
+app.get("/check", async function(req, res){
+  res.send(await sessionUser(req.session)); 
 });
 
 app.get("/viewing/:viewed_user", async function(req, res){
@@ -118,15 +122,24 @@ app.post("/action", async function(req, res){
 
 
 app.get("/callback", async function(req, res){
-  if(req.query.code){
-    // Add this user"s token to the database
-    user = await spotify.authorize(req.query.code);
-  }
+  const token = await spotify.authorize(req.query.code);
+  await postgres.setToken(req.query.state, token, "spotify");
   res.redirect("/");
 });
 
-app.get("/spotify", function(req, res) {
-  res.redirect(process.env.authorization_request);
+app.get("/oauth", function(req, res) {
+  if(req.session.user){
+    const parameters = new URLSearchParams({
+      response_type: "code",
+      client_id: process.env.client_id,
+      redirect_uri: `http://localhost:${process.env.server_port}/callback`,
+      scope: 'user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public',
+      state: req.session.user.user_id
+    });
+    res.send({url: `https://accounts.spotify.com/authorize?` + parameters.toString()});
+  }else{
+    res.send({error: "User is not logged in."})
+  }
 });
 
 app.post("/access", async function(req, res) {
@@ -143,14 +156,14 @@ app.post("/access", async function(req, res) {
   }else{
     req.session.authenticated = true;
     req.session.user = response;
-    res.send(sessionUser(req.session));
+    res.send(await sessionUser(req.session));
   }
 });
 
 app.get("/logout", async function(req, res){
   if(req.session.authenticated){
-    req.session.destroy(function(err){
-      res.clearCookie("connect.sid", {path: "/"}).send(sessionUser(session));
+    req.session.destroy(async function(err){
+      res.clearCookie("connect.sid", {path: "/"}).send(await sessionUser(session));
     });
   }else{
     res.redirect("/");

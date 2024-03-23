@@ -139,6 +139,7 @@ async function authorize(auth_code){
     }
 
   if(auth_code){
+    const redirect_uri = `http://localhost:${process.env.server_port}/callback`; 
     request.body = `grant_type=authorization_code&code=${auth_code}&redirect_uri=${redirect_uri}`;
   }else{
     request.body = `grant_type=client_credentials`;

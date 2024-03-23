@@ -227,7 +227,15 @@ async function login(user_name, pass_word){
     }else{
         return {error: `User ${user_name} not found.`};
     }
-    
+}
+
+async function refreshUser(old_user){
+    const user = await query("SELECT * FROM users WHERE user_id=$1", [old_user.user_id]); 
+    return user.rows.length > 0 ? user.rows[0] : {error: `User doesn't exist.`};
+}
+
+async function setToken(user_id, token, service){
+    await query(`UPDATE users SET ${service}_token = $1 WHERE user_id = $2`, [token, user_id]);
 }
 
 module.exports = {
@@ -236,5 +244,6 @@ module.exports = {
     pullUserAlbums, pushUserAlbums, 
     addUserAlbum, updateUserAlbum, deleteUserAlbum,
     pullUserRatings, pushUserRatings, updateUserRating,
-    query, signup, login
+    query, signup, login, refreshUser,
+    setToken
 };
