@@ -28,7 +28,6 @@
   display: none;
   width: 75%;
   max-width: calc(var(--max-width) * 0.75);
-  aspect-ratio: 1/1;
   max-height: 90dvh;
   z-index: 2;
   background-color: var(--bg-200);

@@ -229,13 +229,21 @@ async function login(user_name, pass_word){
     }
 }
 
-async function refreshUser(old_user){
-    const user = await query("SELECT * FROM users WHERE user_id=$1", [old_user.user_id]); 
+async function refreshUser(user_id){
+    const user = await query("SELECT * FROM users WHERE user_id=$1", [user_id]); 
     return user.rows.length > 0 ? user.rows[0] : {error: `User doesn't exist.`};
 }
 
 async function setToken(user_id, token, service){
-    await query(`UPDATE users SET ${service}_token = $1 WHERE user_id = $2`, [token, user_id]);
+    const user = await refreshUser(user_id);
+
+    if(user.tokens){
+        user.tokens[`${service}`] = token;
+    }else{
+        user.tokens = {[service] : token}
+    }
+
+    await query(`UPDATE users SET tokens = $1 WHERE user_id = $2`, [user.tokens, user_id]);
 }
 
 module.exports = {

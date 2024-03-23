@@ -3,8 +3,6 @@ dotenv.config();
 
 const pasipo_id = process.env.client_id;
 const pasipo_secret = process.env.client_secret;
-const redirect_uri = process.env.redirect_uri;
-
 let pasipo = null;
 
 async function getArtists(album_artists){
@@ -147,10 +145,48 @@ async function authorize(auth_code){
   
   const response = await fetch('https://accounts.spotify.com/api/token', request);
   token = await response.json();
-  token['expiry_time'] = Math.floor(Date.now() / 1000) + token.expires_in - 10;
+  token.expiry_time = Math.floor(Date.now() / 1000) + token.expires_in;
 
   return token;
 }
 
-exports.albumSearch = albumSearch;
-exports.authorize = authorize;
+async function tokenUrl(user){
+  const parameters = new URLSearchParams({
+    response_type: "code",
+    client_id: process.env.client_id,
+    redirect_uri: `http://localhost:${process.env.server_port}/callback`,
+    scope: 'user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public',
+    state: `spotify:${user.user_id}`
+  });
+
+  return {url: `https://accounts.spotify.com/authorize?` + parameters.toString()};
+}
+
+async function refreshToken(token){
+  if(!token || (token.expiry_time > Math.floor(Date.now() / 1000))){ return token; }
+  console.log(token)
+  console.log("^ Old token ^")
+  let request = { 
+    method: 'POST',        
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + (Buffer.from(pasipo_id + ':' + pasipo_secret).toString('base64'))
+    },
+    body: {
+      grant_type: 'refresh_token',
+      refresh_token: token.refresh_token,
+    }
+  }
+
+  const response = await fetch('https://accounts.spotify.com/api/token', request);
+  let refreshed_token = response.json();
+  console.log("V New token V");
+  console.log(refreshToken);
+  refreshed_token.expiry_time = Math.floor(Date.now() / 1000) + refreshed_token.expires_in;
+  return refreshed_token;
+}
+
+module.exports = {
+  albumSearch,
+  authorize, tokenUrl, refreshToken
+};

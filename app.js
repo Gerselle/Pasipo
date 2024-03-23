@@ -33,29 +33,36 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 
+app.get("/check", async function(req, res){
+  res.send(await sessionUser(req.session));
+});
+
+app.get("/token/:service", async function(req, res){
+  if(!res.session || !req.session.user){
+    res.send({error: "No user to check for token."}); return;
+  }else{
+    const token = req.session.user.tokens[`${req.params.service}`];
+    token ? req.send(token) : req.send({error: `No ${req.params.service} token found for user.`});
+  }
+});
 
 async function sessionUser(session){
   let response = {user_id: null, user_name: "local"};
-  if(session.authenticated && session.user){
-    const user = await postgres.refreshUser(session.user);
+  if(session && session.user){
+    const user = await postgres.refreshUser(session.user.user_id);
+    session.user = user; // Need also refresh current sessions user, don't delete this.
     if(!user.error){
-      session.user = user;
       response = {
         user_id : user.user_id,
         profile_image: user.profile_image,
         user_name: user.user_name,
         profile_name: user.profile_name,
         viewer_mode: user.viewer_mode
-        // ,token: user.spotify_token
       }
     };
   }
   return response;
 }
-
-app.get("/check", async function(req, res){
-  res.send(await sessionUser(req.session)); 
-});
 
 app.get("/viewing/:viewed_user", async function(req, res){
   const current_user = req.session.user ? req.session.user.user_name : "local";
@@ -122,23 +129,35 @@ app.post("/action", async function(req, res){
 
 
 app.get("/callback", async function(req, res){
-  const token = await spotify.authorize(req.query.code);
-  await postgres.setToken(req.query.state, token, "spotify");
+  const code = req.query.code;
+  const service_user_id = req.query.state.split(":");
+  let token;
+
+  switch(service_user_id[0]){
+    case "spotify": token = await spotify.authorize(code); break;
+    default: token = null; break;
+  }
+
+  if(token){ await postgres.setToken(service_user_id[1], token, service_user_id[0]); }
+  
   res.redirect("/");
 });
 
-app.get("/oauth", function(req, res) {
-  if(req.session.user){
-    const parameters = new URLSearchParams({
-      response_type: "code",
-      client_id: process.env.client_id,
-      redirect_uri: `http://localhost:${process.env.server_port}/callback`,
-      scope: 'user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public',
-      state: req.session.user.user_id
-    });
-    res.send({url: `https://accounts.spotify.com/authorize?` + parameters.toString()});
+app.get("/oauth/:service", async function(req, res){
+  const user = req.session.user;
+  const service = req.params.service;
+  if(!user){ res.send({error: "User is not logged in."}); return; }
+
+  if(user.tokens){
+    res.send({error: "Token already exists."});
+    if(user.tokens[`${service}`].expiry_time < Math.floor(Date.now() / 1000)){
+      console.log(`${user.user_id}'s ${service} token is expired.`);
+    }
   }else{
-    res.send({error: "User is not logged in."})
+     switch(service){
+      case "spotify": res.send(await spotify.tokenUrl(user)); break;
+      default: res.send({error: "Unknown music service."});
+    } 
   }
 });
 
@@ -163,7 +182,8 @@ app.post("/access", async function(req, res) {
 app.get("/logout", async function(req, res){
   if(req.session.authenticated){
     req.session.destroy(async function(err){
-      res.clearCookie("connect.sid", {path: "/"}).send(await sessionUser(session));
+      res.clearCookie("connect.sid", {path: "/"})
+         .send(await sessionUser(req.session));
     });
   }else{
     res.redirect("/");

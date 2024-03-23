@@ -186,7 +186,7 @@ async function authorize(){
 }
 
 async function getToken(){
-  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth`)
+  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth/spotify`)
     .then(async (response) => {
       const redirect = await response.json();
       if(redirect.error){
