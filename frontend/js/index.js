@@ -10,12 +10,14 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 });
 
 // Simple helper functions
-function updateContent(){ sendEvent(updateJS, {script: docId("content").value}); }
 function sessionGet(key){return sessionStorage.getItem(key)};
 function sessionSet(key, value){return sessionStorage.setItem(key, value)};
 function localGet(key){return localStorage.getItem(key)};
 function localSet(key, value){return localStorage.setItem(key, value)};
-
+function updateScreen(){
+  sendEvent(updateJS, {script: docId("content").value});
+  docId("icon").innerHTML = JSON.parse(sessionGet("current_user")).user_name;
+}
 function debounce(func, timeout) {
   let timer;
   return (...args) => {
@@ -149,7 +151,7 @@ async function requestAccess(event){
     access_request["pass_confirm"] = docId("pass_confirm").value;
   } 
   
-  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/access`, {
+  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/access/pasipo`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify(access_request)
@@ -165,6 +167,7 @@ async function requestAccess(event){
       }
       sessionSet("current_user", JSON.stringify(access_response));
       pullUser();
+      updateScreen();
     }
   });
 }
@@ -178,15 +181,17 @@ async function authorize(){
         const local = await response.json();
         sessionSet("current_user", JSON.stringify(local)); 
         clearUser();
-        updateContent();
+        updateScreen();
       });
   }else{ // Open login/signup panel
     toggleAccess();
   }
 }
 
-async function getToken(){
-  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth/spotify`)
+async function oAuth(event){
+  const service = event.getAttribute("service");
+  const action = event.getAttribute("action");
+  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth/${service}/${action}`)
     .then(async (response) => {
       const redirect = await response.json();
       if(redirect.error){
@@ -254,7 +259,7 @@ async function pullUser(){
       }
     });
 
-    updateContent();
+    updateScreen();
 }
 
 async function pushUser(){

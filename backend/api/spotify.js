@@ -1,9 +1,31 @@
 const dotenv = require('dotenv');
 dotenv.config();
 
-const pasipo_id = process.env.client_id;
-const pasipo_secret = process.env.client_secret;
-let pasipo = null;
+const client_id = process.env.client_id;
+const client_secret = process.env.client_secret;
+let client;
+authorize(null).then((token) => {client = token;});
+
+async function loadAlbum(album_id, user_token){
+ if(album_id && user_token){
+    const request = { 
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user_token.access_token}`
+      },  
+      body: JSON.stringify({
+          "context_uri": `spotify:album:${album_id}`,
+          "offset": {
+              "position": 0
+          },
+          "position_ms": 0
+      })
+    }
+
+    fetch(`https://api.spotify.com/v1/me/player/play`, request);
+  }
+}
 
 async function getArtists(album_artists){
   let artists = [];
@@ -12,7 +34,7 @@ async function getArtists(album_artists){
     { 
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${pasipo.access_token}`}
+        'Authorization': `Bearer ${client.access_token}`}
     });
 
     spotify_artist = await(await artist_response.json());
@@ -35,7 +57,7 @@ async function getTracklist(album_id){
   {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${pasipo.access_token}`
+      'Authorization': `Bearer ${client.access_token}`
     }
   });
 
@@ -48,7 +70,7 @@ async function getTracklist(album_id){
       const response = await fetch(result.next, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${pasipo.access_token}`}
+            'Authorization': `Bearer ${client.access_token}`}
         });
       result = await response.json();
       spotify_track_list = spotify_track_list.concat(result.items);
@@ -72,8 +94,8 @@ async function getTracklist(album_id){
 }
 
 async function albumSearch(album_query){
-  if(pasipo == null || pasipo.expiry_time < Math.floor(Date.now() / 1000 )){
-    pasipo = await authorize(null);
+  if(client == null || client.expiry_time < Math.floor(Date.now() / 1000 )){
+    client = await authorize(null);
   }
   
   const album_response = 
@@ -81,7 +103,7 @@ async function albumSearch(album_query){
       { 
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${pasipo.access_token}`}
+          'Authorization': `Bearer ${client.access_token}`}
       });
 
   spotify_response = await(await album_response.json());
@@ -132,7 +154,7 @@ async function authorize(auth_code){
       method: 'POST',        
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + (Buffer.from(pasipo_id + ':' + pasipo_secret).toString('base64'))
+        'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base64'))
       }
     }
 
@@ -150,13 +172,41 @@ async function authorize(auth_code){
   return token;
 }
 
-async function tokenUrl(user){
+async function userInfo(code){
+
+  const token = await authorize(code);
+
+  if(!token){ return null; }
+
+  const response =  await fetch(`https://api.spotify.com/v1/me`, { 
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token.access_token}`}
+  });
+
+  const info = await response.json();
+
+  if(info.error){ return null; }
+
+  const user_info ={
+    service_email: info.email,
+    service_profile_name: info.display_name,
+    service_url: info.external_urls["spotify"],
+    service_id: info.id,
+    service_image: info.images[info.images.length - 1].url,
+    service_token: token
+  }
+
+  return user_info;
+}
+
+async function tokenUrl(user_id, token_type){
   const parameters = new URLSearchParams({
     response_type: "code",
     client_id: process.env.client_id,
     redirect_uri: `http://localhost:${process.env.server_port}/callback`,
-    scope: 'user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public',
-    state: `spotify:${user.user_id}`
+    scope: `user-read-email user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public streaming app-remote-control`,
+    state: `spotify:${user_id}:${token_type}`
   });
 
   return {url: `https://accounts.spotify.com/authorize?` + parameters.toString()};
@@ -164,29 +214,31 @@ async function tokenUrl(user){
 
 async function refreshToken(token){
   if(!token || (token.expiry_time > Math.floor(Date.now() / 1000))){ return token; }
-  console.log(token)
-  console.log("^ Old token ^")
-  let request = { 
-    method: 'POST',        
+
+  const request = {
+    method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
-      'Authorization': 'Basic ' + (Buffer.from(pasipo_id + ':' + pasipo_secret).toString('base64'))
+      'Authorization': 'Basic ' + (new Buffer.from(client_id + ':' + client_secret).toString('base64'))
     },
-    body: {
-      grant_type: 'refresh_token',
+    body: new URLSearchParams({
       refresh_token: token.refresh_token,
-    }
-  }
+      grant_type: 'refresh_token'
+    }).toString()
+  };
 
   const response = await fetch('https://accounts.spotify.com/api/token', request);
-  let refreshed_token = response.json();
-  console.log("V New token V");
-  console.log(refreshToken);
+  let refreshed_token = await response.json();
+  
+  if(refreshed_token.error){ return refreshed_token; }
+
+  if(!refreshed_token.refresh_token){refreshed_token.refresh_token = token.refresh_token};
   refreshed_token.expiry_time = Math.floor(Date.now() / 1000) + refreshed_token.expires_in;
+
   return refreshed_token;
 }
 
 module.exports = {
-  albumSearch,
-  authorize, tokenUrl, refreshToken
+  albumSearch, loadAlbum,
+  userInfo, tokenUrl, refreshToken
 };

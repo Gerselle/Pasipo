@@ -7,17 +7,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="title_bar">Pasipo</title>
-
+    
     <script src="/js/typesense.min.js"></script>
     <script src="/js/dayjs.min.js"></script>
     <script src="/js/router.js" defer></script>
     <script src="/js/index.js" defer></script>
     <link rel="stylesheet" href="/css/index.css">
 
-    <script id="content_js"></script>
+    <script id="content_js" defer></script>
     <link id="content_css" rel="stylesheet">
 
-    <script id="focus_js"></script>
+    <script id="focus_js" defer></script>
     <link id="focus_css" rel="stylesheet">
 
     <script type="module" src="/player/player.js" defer></script>
@@ -44,7 +44,7 @@
   
     <div class="content" id="content"></div>
     <div class="profile" id="profile" style="display: none;">
-      <div class="section"><button type="button" onclick="getToken()">Spotify</button></div>
+      <div class="section"><button type="button" onclick="oAuth(this)" service="spotify" action="acquire">Spotify</button></div>
       <div class="section"><button type="button">Settings</button></div>
       <div class="section"><button type="button"><div onclick="toggleDarkMode()" id="mode">Light Mode</div></button></div>      
       <div class="section"><button type="button" onclick="authorize()" id="authorize">Logout</button></div>
@@ -52,4 +52,7 @@
   </div>
   
 </body>
+
+<script src="https://sdk.scdn.co/spotify-player.js" defer></script>
+
 </html>

@@ -57,11 +57,16 @@ function parseLocation(location){
 const updateJS = new CustomEvent("update", {detail: {script: "", start: false}});
 const playerEvent = new CustomEvent("player", {detail: {action: null, data: null}});
 function sendEvent(event, new_detail = null){
+  if(!event){ return; }
   for(let key in new_detail){ event.detail[key] = new_detail[key]; }
   document.dispatchEvent(event);
 }
 
 async function locationHandler(location){
+  // TODO: This is a bandaid solution for successful oauths 
+  // not telling user to pull their info down.
+  if(window.location.pathname == "/"){ pullUser(); }
+
   const template = parseLocation(location || window.location.pathname);
   
   await fetch(`/templates/${template}.html`).then(async(response) =>{

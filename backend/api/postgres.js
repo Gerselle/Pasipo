@@ -84,11 +84,12 @@ async function getViewedUser(viewed_user, current_user){
             viewed_ratings[found_rating.album_id] = found_rating.rating;
         });
 
-        return {user_name: viewed_user,
+        return {
+                user_name: viewed_user,
                 profile_name: found_user.profile_name,
                 albums: viewed_albums,
                 ratings: viewed_ratings
-                };
+               };
     }else{
         return {error: `User "${viewed_user}" does not exist.`};
     }
@@ -166,7 +167,9 @@ async function updateUserRating(user, data){
     }{
         album_rating = await query("SELECT ")
     }
-    query(`INSERT INTO ratings(user_id, album_id, rating) VALUES ($1, $2, $3) ON CONFLICT(user_id, album_id) DO UPDATE SET rating = EXCLUDED.rating;`, [user.user_id, data.id, data.rating]);
+    query(`INSERT INTO ratings(user_id, album_id, rating) VALUES ($1, $2, $3) ON CONFLICT(user_id, album_id) 
+           DO UPDATE SET rating = EXCLUDED.rating;`, [user.user_id, data.id, data.rating]);
+
     return {success: "Rating updated successfully."};
 }
 
@@ -202,31 +205,30 @@ async function signup(user_name, pass_word, pass_confirm){
 
     const hashed_pass_word = await hashPassword(pass_word, salt, 64);
 
-    const signup = await query("INSERT INTO users(user_name, hashed_pass_word, salt, profile_name) VALUES ($1, $2, $3, $4)",
-                        [user_name, hashed_pass_word, salt, user_name]);
+    const signup = await query("INSERT INTO users(user_name, hashed_pass_word, salt, profile_name, tokens) VALUES ($1, $2, $3, $4, $5)",
+                        [user_name, hashed_pass_word, salt, user_name, {}]);
 
     if(signup.error){
         return {error: `Username is already taken, please enter another.`}
     }
 
-    return await login(user_name, pass_word);;
+    return await login(user_name, pass_word);
 }
 
 async function login(user_name, pass_word){ 
     user_name = user_name.toLowerCase();
     const users = await query("SELECT * FROM users WHERE user_name = $1", [user_name]);
+    if(!user.rows || !user.rows[0]) { return {error: `User ${user_name} not found.`} };
+
     const user = users.rows[0];
 
-    if(user){
-        const hashed_pass_word = await hashPassword(pass_word, user.salt, 64);
-        if(crypto.timingSafeEqual(hashed_pass_word, user.hashed_pass_word)){
-            return user;
-        }else{
-            return {error: `Password is incorrect, please try again.`};
-        }
+    const hashed_pass_word = await hashPassword(pass_word, user.salt, 64);
+    if(crypto.timingSafeEqual(hashed_pass_word, user.hashed_pass_word)){
+        return user;
     }else{
-        return {error: `User ${user_name} not found.`};
+        return {error: `Password is incorrect, please try again.`};
     }
+
 }
 
 async function refreshUser(user_id){
@@ -234,16 +236,82 @@ async function refreshUser(user_id){
     return user.rows.length > 0 ? user.rows[0] : {error: `User doesn't exist.`};
 }
 
-async function setToken(user_id, token, service){
-    const user = await refreshUser(user_id);
+async function userWithServiceExists(service, service_id){
+    const check = await query(`SELECT * FROM users WHERE ${service}_id=$1`, [service_id]);
+    if(check.error){ return false; }
+    return (check.rows.length > 0);
+}
 
-    if(user.tokens){
-        user.tokens[`${service}`] = token;
-    }else{
-        user.tokens = {[service] : token}
+async function setToken(user_info){
+    if(!user_info){ return; }
+
+    const service = user_info.service // Music services (Spotify, Apple Music, YT Music, etc.)
+    if(!["spotify", "apple", "youtube"].includes(service)) { return; }
+
+    const user = await refreshUser(user_info.user_id);
+    if(user.error) { return; }
+
+    const conflict = await userWithServiceExists(service, user_info.service_id);
+
+    // User.tokens could be empty when a user is first created in the database,
+    // so we account for that and create a new json object for the tokens if it's null
+    // otherwise we just add the current service's token to the set of tokens.
+    if(!conflict){
+
+        if(!user.tokens){ 
+            user.tokens = {[service] : user_info.service_token} 
+        } else if(!user.token[`${service}`]){
+            user.tokens[`${service}`] = user_info.service_token; 
+        }
+
+        // User.urls might be empty as well, so do the same.
+        if(!user.urls){
+            user.urls = {[service] : user_info.service_url}
+        }else if(!user.urls[`${service}`]){
+            user.urls[`${service}`] = user_info.service_url;
+        }
+
+        // This just adds the service's values if the user doesn't already have them.
+        if(!user.email){ user.email = user_info.service_email; }
+        if(!user.profile_image){ user.profile_image = user_info.service_image; }
+        if(!user.profile_name){ user.profile_name = user_info.service_profile_name; }
+        if(!user[`${service}_id`]){ user[`${service}_id`] = user_info.service_id; }
+
+        await query(
+            `UPDATE users 
+                SET user_email=$1,
+                    profile_name=$2,
+                    profile_image=$3,
+                    ${service}_id=$4,
+                    tokens=$5,
+                    urls=$6
+                WHERE user_id=$7`,
+            [user.email, user.profile_name, user.profile_image,
+             user[`${service}_id`], user.tokens, user.urls, user.user_id]
+        );
     }
+}
 
-    await query(`UPDATE users SET tokens = $1 WHERE user_id = $2`, [user.tokens, user_id]);
+async function loginToken(user_info){
+    const login = await query(`SELECT * FROM users WHERE ${user_info.service}_id=$1`, [user_info.service_id]);
+    return (login.rows && (login.rows.length > 0)) ? login.rows[0] : {error: `No user with given ${user_info.service} id found.`};
+}
+
+async function signupToken(user_info){
+    const check = await loginToken(user_info);
+    if(!check.error) { return };
+
+    const signup = await query(
+        `INSERT INTO users(user_email, profile_name,
+            ${user_info.service}_id, profile_image, urls, tokens) 
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+         [user_info.service_email,
+          user_info.service_name,
+          user_info.service_id,
+          user_info.service_image,
+          {[user_info.service] : user_info.service_token}]);
+
+    console.log(signup);
 }
 
 module.exports = {
@@ -253,5 +321,5 @@ module.exports = {
     addUserAlbum, updateUserAlbum, deleteUserAlbum,
     pullUserRatings, pushUserRatings, updateUserRating,
     query, signup, login, refreshUser,
-    setToken
+    setToken, loginToken, signupToken
 };
