@@ -50,7 +50,8 @@ async function sessionUser(session){
       profile_image: user.profile_image,
       user_name: user.user_name,
       profile_name: user.profile_name,
-      viewer_mode: user.viewer_mode
+      viewer_mode: user.viewer_mode,
+      service: user.current_service 
     }
   }
   return response;
@@ -63,13 +64,13 @@ async function refreshUser(session){
   }
 }
 
-app.get("/token", async function(req, res){
+app.get("/token/:service", async function(req, res){
   if(!req.session || !req.session.user){
     res.send({error: "No user to check for token."}); return;
   }
 
   const user = req.session.user;
-  let token = await refreshToken(user);
+  let token = await refreshToken(user, req.params.service);
   if(token){
     res.send({access_token: token.access_token, expiry_time: token.expiry_time});
   }else{
@@ -77,15 +78,17 @@ app.get("/token", async function(req, res){
   }
 });
 
-async function refreshToken(user){
+async function refreshToken(user, set_service = null){
   if(!user || !user.tokens){ return { error: `No user tokens found for token refresh.` }; }
 
-  let token = user.tokens[`${user.current_service}`];
-  if(!token){ return { error: `No token for ${user.current_service} found for token refresh.` }; };
+  const service = set_service || user.current_service;
+
+  let token = user.tokens[`${service}`];
+  if(!token){ return { error: `No token for ${service} found for token refresh.`}; };
 
   if(token.expiry_time > Math.floor(Date.now()/1000)){ return token; }
 
-  switch(user.current_service){
+  switch(service){
     case "spotify": token = await spotify.refreshToken(token); break;
     default : token = {error: "No service defined for token refresh." };
   }
@@ -196,11 +199,7 @@ app.get("/callback", async function(req, res){
     case "acquire": await postgres.setToken(user_info); break;
     case "login": 
       const login = await postgres.loginToken(user_info);
-      if(!login.error){
-        req.session.user = login;
-      }else{
-        console.log(login.error);
-      }
+      if(login && !login.error){ req.session.user = login; }
       break;
     case "signup":
       const signup = await postgres.signupToken(user_info, token);
@@ -210,12 +209,22 @@ app.get("/callback", async function(req, res){
   res.redirect("/");
 });
 
-app.get("/load/:album_id", async function(req, res){
+app.get("/loadplayer/:service/:device_id", async function(req, res){
   const user = req.session.user;
   if(user){
-    const user_token = await refreshToken(user);
-    switch(user.current_service){
-      case "spotify": spotify.loadAlbum(req.params.album_id, user_token); break;
+    const user_token = await refreshToken(user, req.params.service);
+    switch(req.params.service){
+      case "spotify": spotify.loadPlayer(req.params.device_id, user_token); break;
+    }
+  }
+});
+
+app.get("/loadtrack/:service/:album_id/:track_pos", async function(req, res){
+  const user = req.session.user;
+  if(user){
+    const user_token = await refreshToken(user, req.params.service);
+    switch(req.params.service){
+      case "spotify": spotify.loadTrack(req.params.album_id, req.params.track_pos, user_token); break;
     }
   }
 });

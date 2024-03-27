@@ -10,9 +10,9 @@ document.addEventListener("update", async (update) => {
     update.detail.start ? start() : parseDayPath();
     update.detail.start = false;
   }else if (update.detail.script === "player") {
-    const track_num = update.detail.track_num;
+    const track_id = update.detail.track_id;
     if( playing_row ){ playing_row.classList.remove("playing"); }
-    playing_row = album_tracklist.querySelector(`[track="${track_num}"]`);
+    playing_row = album_tracklist.querySelector(`[track_id="${track_id}"]`);
     playing_row.classList.add("playing");
   }
 })
@@ -384,7 +384,7 @@ async function searchAlbum(event = null) {
 }
 
 async function updateAlbum(set_album = null){
-  docId("album").style.display = "none";
+  docId("album_player").style.display =  "none"
   const options_panel = docId("select");
   options_panel.style.display = "none";
   
@@ -427,7 +427,10 @@ async function updateAlbum(set_album = null){
 
   displayAlbum(album);
 
-  if(album){ sendEvent(playerEvent, {action: "loadAlbum", data: album}); }
+  if(album){
+    sendEvent(playerEvent, {action: "loadAlbum", data: album}); 
+    album_player.style =  "display: flex;"
+  }
 }
 
 const tracks = docId("album_tracklist");
@@ -437,7 +440,6 @@ tracks.addEventListener("dragend", () => {tracks.classList.remove("draggable"); 
 
 
 async function displayAlbum(album){
-
   if(album){
     const album_img = docId("album_img");
     const album_artists = docId("album_artists");
@@ -475,7 +477,7 @@ async function displayAlbum(album){
 
     for (let i = 0; i < album.track_list.length; i++){
       tracklist_update += 
-      ` <tr track=${i}>
+      ` <tr track=${i} track_id=${album.track_list[i].id}>
           <td class="num">${i + 1}</td>
           <td class="title">${album.track_list[i].name}</td>
         </tr>

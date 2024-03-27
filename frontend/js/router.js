@@ -33,10 +33,10 @@ async function route(event){
 }
 
 function parseLocation(location){
-  const parts = location.split("/").filter(segment => segment.trim() !== '');
+  const segments = location.split("/").filter(segment => segment.trim() !== '');
 
-  // Path should be within 4 parts ex: /admin/2000/03/21)
-  switch(parts.length){
+  // Path should be within 4 segments ex: /admin/2000/03/21)
+  switch(segments.length){
     case 0: return "day";
     case 1: break;
     case 2: return "year";
@@ -51,7 +51,7 @@ function parseLocation(location){
     "signup"
   ];
 
-  return sections.includes(parts[0]) ? parts[0] : "user";
+  return sections.includes(segments[0]) ? segments[0] : "user";
 }
 
 const updateJS = new CustomEvent("update", {detail: {script: "", start: false}});
@@ -63,8 +63,8 @@ function sendEvent(event, new_detail = null){
 }
 
 async function locationHandler(location){
-  // TODO: This is a bandaid solution for successful oauths 
-  // not telling user to pull their info down.
+  // TODO: This is a bandaid solution for users not 
+  // getting their information after logging in with OAuth.
   if(window.location.pathname == "/"){ pullUser(); }
 
   const template = parseLocation(location || window.location.pathname);

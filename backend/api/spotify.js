@@ -4,26 +4,66 @@ dotenv.config();
 const client_id = process.env.client_id;
 const client_secret = process.env.client_secret;
 let client;
+
 authorize(null).then((token) => {client = token;});
 
-async function loadAlbum(album_id, user_token){
- if(album_id && user_token){
-    const request = { 
+async function loadPlayer(device_id, user_token){
+
+  if(device_id && user_token){
+    const transfer_request = {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user_token.access_token}`
+      },  
+      body: JSON.stringify({device_ids: [ device_id ], play: false})
+    }
+    try {
+      await fetch(`https://api.spotify.com/v1/me/player`, transfer_request);
+    } catch (error) {
+      console.log(error);
+    }
+    
+
+    const simple_request = {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user_token.access_token}` }
+    }
+
+    try {
+      fetch(`https://api.spotify.com/v1/me/player/shuffle?state=false&device_id=${device_id}`, simple_request);
+    } catch (error) {
+      console.log(error);
+    }
+
+    try {
+      fetch(`https://api.spotify.com/v1/me/player/repeat?state=off&device_id=${device_id}`, simple_request);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+}
+
+async function loadTrack(album_id, track_pos, user_token){
+  if(album_id && user_token){
+    const track_request = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${user_token.access_token}`
       },  
       body: JSON.stringify({
-          "context_uri": `spotify:album:${album_id}`,
-          "offset": {
-              "position": 0
-          },
-          "position_ms": 0
+        context_uri: `spotify:album:${album_id}`,
+        offset: { position : track_pos },
+        position_ms: 0
       })
     }
 
-    fetch(`https://api.spotify.com/v1/me/player/play`, request);
+    try {
+      await fetch(`https://api.spotify.com/v1/me/player/play`, track_request);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 
@@ -239,6 +279,6 @@ async function refreshToken(token){
 }
 
 module.exports = {
-  albumSearch, loadAlbum,
+  albumSearch, loadPlayer, loadTrack,
   userInfo, tokenUrl, refreshToken
 };
