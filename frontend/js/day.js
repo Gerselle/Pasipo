@@ -1,6 +1,10 @@
 async function start(){
   await parseDayPath();
   await dayListeners();
+  const user = JSON.parse(sessionGet("current_user"))
+  if(!user){ return; }
+  if(user.active_token){ sendEvent(playerEvent, {action: "start"}); }
+  docId("album_player").style.display = user.active_token ? "flex" : "none";
 }
 
 let playing_row;
@@ -21,10 +25,10 @@ docId("album_tracklist").addEventListener("click", (event) => {
   const row = event.target.closest("tr");
   if( playing_row ){ playing_row.classList.remove("playing"); }
   playing_row = row;
+  if(!row) { return; }
   row.classList.add("playing");
   sendEvent(playerEvent, {action: "setTrack", data: row.getAttribute("track")});
 });
-
 
 async function parseDayPath(){
   const path = window.location.pathname;
@@ -133,22 +137,22 @@ async function getAlbum(album_id){
   return await dbAccess("albums", album_id, "get") || await fetchAlbum(album_id);
 }
 
-async function moveDate(increment){
-  // Require user to select a new album for each date
-  sessionSet("selected_album", null);
-
-  const date = docId("date");
-  let selected_date = dayjs(sessionGet("selected_date"), "MMM DD, YYYY");
-
-  selected_date = increment ? selected_date.add(1, 'day') : selected_date.subtract(1, 'day');
-
-  date.innerHTML = selected_date.format("MMM DD, YYYY");
-  sessionSet("selected_date", date.innerHTML);
-
-  updateAlbum();
+function moveDate(increment){
+    // Require user to select a new album for each date
+    sessionSet("selected_album", null);
+  
+    const date = docId("date");
+    let selected_date = dayjs(sessionGet("selected_date"), "MMM DD, YYYY");
+  
+    selected_date = increment ? selected_date.add(1, 'day') : selected_date.subtract(1, 'day');
+  
+    date.innerHTML = selected_date.format("MMM DD, YYYY");
+    sessionSet("selected_date", date.innerHTML);
+  
+    updateAlbum();
 }
 
-async function moveMonth(increment){
+function moveMonth(increment){
   let month = dayjs(sessionGet("calendar_date"), "MMM DD, YYYY");
   month = increment ? month.add(1, 'month') : month.subtract(1, 'month');
   sessionSet("calendar_date", month.format("MMM DD, YYYY"));
@@ -318,13 +322,13 @@ const search_results = docId("search_results");
 album_query.addEventListener("keyup", searchInput);
 album_search.addEventListener("click", searchAlbum);
 search_results.addEventListener("click", searchAlbum);
-const debounced_search = debounce(async () => presearchAlbum(), 200);
+const debouncedSearch = debounce(async () => presearchAlbum(), 200);
 
 async function searchInput(event){
   if(event.key == "Enter"){
     searchAlbum();
-  }else if(album_query.value.length > 0){
-    debounced_search();
+  }else if(album_query.value.length > 2){
+    debouncedSearch();
   }else{
     search_results.innerHTML = "";
   }
@@ -365,11 +369,11 @@ async function searchAlbum(event = null) {
     const presearch = JSON.parse(sessionGet("presearch"));
     album = presearch[event.target.value];
   }else{
-    album = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/search`, {
+    await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/search`, {
       'method': "POST",
       'headers': { "Content-Type": "application/json" },
       'body': JSON.stringify({ "album_query": album_query.value})
-    }).then((response) => response.json());
+    }).then(async (response) => album = await response.json());
   }
 
   if(album.url){
@@ -384,7 +388,6 @@ async function searchAlbum(event = null) {
 }
 
 async function updateAlbum(set_album = null){
-  docId("album_player").style.display =  "none"
   const options_panel = docId("select");
   options_panel.style.display = "none";
   
@@ -426,11 +429,6 @@ async function updateAlbum(set_album = null){
   window.history.pushState({}, "", `/${viewed_user.user_name}${dayjs(selected_date).format("/YYYY/M/D")}`);
 
   displayAlbum(album);
-
-  if(album){
-    sendEvent(playerEvent, {action: "loadAlbum", data: album}); 
-    album_player.style =  "display: flex;"
-  }
 }
 
 const tracks = docId("album_tracklist");
@@ -488,5 +486,6 @@ async function displayAlbum(album){
   }
 
   docId("album").style.display = album ? "flex" : "none";
-}
 
+  if(album){ sendEvent(playerEvent, {action: "loadAlbum", data: album}); }
+}

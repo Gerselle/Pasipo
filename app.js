@@ -51,7 +51,7 @@ async function sessionUser(session){
       user_name: user.user_name,
       profile_name: user.profile_name,
       viewer_mode: user.viewer_mode,
-      service: user.current_service 
+      active_token: user.tokens[`${user.current_service}`] ? user.current_service : null
     }
   }
   return response;

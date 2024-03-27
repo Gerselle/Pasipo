@@ -22,9 +22,9 @@ function updateScreen(){
   }else{
     docId("icon").innerHTML = user.user_name;
   }
-  
 }
-function debounce(func, timeout) {
+
+function debounce(func, timeout){
   let timer;
   return (...args) => {
     clearTimeout(timer);
@@ -174,6 +174,7 @@ async function requestAccess(event){
       sessionSet("current_user", JSON.stringify(access_response));
       pullUser();
       updateScreen();
+      window.location.pathname = "";
     }
   });
 }
@@ -188,6 +189,7 @@ async function authorize(){
         sessionSet("current_user", JSON.stringify(local)); 
         clearUser();
         updateScreen();
+        window.location.pathname = "";
       });
   }else{ // Open login/signup panel
     toggleAccess();
