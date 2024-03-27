@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
   .then(async(response) => {
     const current_user = await response.json();
     sessionSet("current_user", JSON.stringify(current_user));
-    docId("icon").innerHTML = current_user.user_name;
+    updateScreen();
   });
 });
 
@@ -16,7 +16,13 @@ function localGet(key){return localStorage.getItem(key)};
 function localSet(key, value){return localStorage.setItem(key, value)};
 function updateScreen(){
   sendEvent(updateJS, {script: docId("content").value});
-  docId("icon").innerHTML = JSON.parse(sessionGet("current_user")).user_name;
+  const user = JSON.parse(sessionGet("current_user"));
+  if(user.profile_image){
+    docId("icon").innerHTML = `<img src="${user.profile_image}" alt="icon">`;
+  }else{
+    docId("icon").innerHTML = user.user_name;
+  }
+  
 }
 function debounce(func, timeout) {
   let timer;

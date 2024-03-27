@@ -183,7 +183,17 @@ a:hover{
 }
 
 .top-bar .icon{
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--bg-100);
+  filter: none;
+  overflow: hidden;
+}
+
+.top-bar .icon img{
+  width: 100%;
+  height: 100%;
   filter: none;
 }
 
