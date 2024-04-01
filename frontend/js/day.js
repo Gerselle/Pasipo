@@ -1,13 +1,17 @@
+let playing_row;
+let content_album;
+const content_audio = new Audio();
+content_audio.autoplay = true;
+
+
 async function start(){
   await parseDayPath();
   await dayListeners();
-  const user = JSON.parse(sessionGet("current_user"))
-  if(!user){ return; }
-  if(user.active_token){ sendEvent(playerEvent, {action: "start"}); }
-  docId("album_player").style.display = user.active_token ? "flex" : "none";
+  current_user = JSON.parse(sessionGet("current_user"))
+  if(!current_user){ return; }
+  if(current_user.active_token){ sendEvent(playerEvent, {action: "start"}); }
+  docId("album_player").style.display = current_user.active_token ? "flex" : "none";
 }
-
-let playing_row;
 
 document.addEventListener("update", async (update) => {
   if(update.detail.script === "day"){
@@ -23,11 +27,24 @@ document.addEventListener("update", async (update) => {
 
 docId("album_tracklist").addEventListener("click", (event) => {
   const row = event.target.closest("tr");
+  const track_number = row.getAttribute("track");
+
+  if(current_user.active_token){
+    sendEvent(playerEvent, {action: "setTrack", data: track_number});
+  }else{
+    if(playing_row != row){
+      content_audio.src = content_album.track_list[track_number].preview;
+      content_audio.volume = localGet("volume") || 0.25;
+      content_audio.load();
+    }else{
+      content_audio.paused ? content_audio.play() : content_audio.pause();
+    }
+  }
+  
   if( playing_row ){ playing_row.classList.remove("playing"); }
   playing_row = row;
   if(!row) { return; }
   row.classList.add("playing");
-  sendEvent(playerEvent, {action: "setTrack", data: row.getAttribute("track")});
 });
 
 async function parseDayPath(){
@@ -35,8 +52,8 @@ async function parseDayPath(){
   let path_user = path.split("/")[1] || "local";
  
   if(path_user === "local"){
-    const current_user = JSON.parse(sessionGet("current_user")).user_name;
-    sessionSet("viewed_user", JSON.stringify({is_current_user: true, user_name: current_user}));
+    current_user = JSON.parse(sessionGet("current_user"));
+    sessionSet("viewed_user", JSON.stringify({is_current_user: true, user_name: current_user.user_name}));
   }else{
     await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/viewing/${path_user}`)
           .then(async(response) => {
@@ -477,9 +494,9 @@ async function displayAlbum(album){
     }
   
     tracklist.innerHTML = tracklist_update;
+    sendEvent(playerEvent, {action: "loadAlbum", data: album});
+    content_album = album;
   }
 
   docId("album").style.display = album ? "flex" : "none";
-
-  if(album){ sendEvent(playerEvent, {action: "loadAlbum", data: album}); }
 }

@@ -16,7 +16,7 @@ async function loadPlayer(device_id, user_token){
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${user_token.access_token}`
       },  
-      body: JSON.stringify({device_ids: [ device_id ], play: true})
+      body: JSON.stringify({device_ids: [ device_id ], play: false})
     }
     try {
       await fetch(`https://api.spotify.com/v1/me/player`, transfer_request);

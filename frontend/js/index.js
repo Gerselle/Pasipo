@@ -1,9 +1,11 @@
+let current_user;
+
 document.addEventListener("DOMContentLoaded", async (event) => {
   toggleDarkMode(localStorage.getItem("color_mode"));
   await dbStart();
   await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/check`)
   .then(async(response) => {
-    const current_user = await response.json();
+    current_user = await response.json();
     sessionSet("current_user", JSON.stringify(current_user));
     updateScreen();
   });
@@ -16,11 +18,11 @@ function localGet(key){return localStorage.getItem(key)};
 function localSet(key, value){return localStorage.setItem(key, value)};
 function updateScreen(){
   sendEvent(updateJS, {script: docId("content").value});
-  const user = JSON.parse(sessionGet("current_user"));
-  if(user.profile_image){
-    docId("icon").innerHTML = `<img src="${user.profile_image}" alt="icon">`;
+  current_user = JSON.parse(sessionGet("current_user"));
+  if(current_user.profile_image){
+    docId("icon").innerHTML = `<img src="${current_user.profile_image}" alt="icon">`;
   }else{
-    docId("icon").innerHTML = user.user_name;
+    docId("icon").innerHTML = current_user.user_name;
   }
 }
 
@@ -157,7 +159,7 @@ async function requestAccess(event){
     access_request["pass_confirm"] = docId("pass_confirm").value;
   } 
   
-  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/access/pasipo`, {
+  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/access`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify(access_request)
@@ -174,7 +176,6 @@ async function requestAccess(event){
       sessionSet("current_user", JSON.stringify(access_response));
       pullUser();
       updateScreen();
-      window.location.pathname = "";
     }
   });
 }
@@ -186,10 +187,10 @@ async function authorize(){
     fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/logout`)
       .then(async (response) => {   
         const local = await response.json();
+        sendEvent(playerEvent, {action: "disconnect"});
         sessionSet("current_user", JSON.stringify(local)); 
         clearUser();
         updateScreen();
-        window.location.pathname = "";
       });
   }else{ // Open login/signup panel
     toggleAccess();
@@ -211,7 +212,7 @@ async function oAuth(event){
 }
 
 function userLoggedIn(){
-  return JSON.parse(sessionGet("current_user")).user_id ? true : false;
+  return current_user.user_id ? true : false;
 }
 
 function clearUser(){

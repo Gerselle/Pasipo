@@ -20,11 +20,13 @@ document.addEventListener("player", async (event) => {
     break;
     case "loadAlbum": loadAlbum(event.detail.data); break;
     case "setTrack": setTrack(event.detail.data); break;
+    case "disconnect": if(musicEvent){ sendEvent(musicEvent, {action: "disconnect"}) } break;
     default: break;
   }
 });
 
 function playerUpdate(event){
+  if(!current_user || !current_user.active_token){ return; }
   const target = event.target.closest('[id]');
   switch(target){
     case p_play: playTrack(); break;
@@ -43,9 +45,11 @@ function updatePlayer(state){
   // State will always update time, but the progress bar only updates if a track
   // is playing to keep sync with the actual music service web player
   progress = {time_pos: state.time_pos, time_end: state.time_end };
-  updateProgress();
   if(progress_interval){ clearInterval(progress_interval); }
-  if(state.track_playing){ progress_interval = setInterval(updateProgress, 1000); }
+  if(state.track_playing){
+    updateProgress();
+    progress_interval = setInterval(updateProgress, 1000);
+  }
   
   // Update the player's title based on if the user is looking at the album that the 
   // playing track is from. Also update the content's DOM if needed.
@@ -75,7 +79,6 @@ function updateProgress(){
   p_start.innerHTML = dayjs(current).format("mm:ss");
   p_end.innerHTML = dayjs(end).format("mm:ss");
 }
-
 
 const playTrack = throttle(()=>{ sendEvent(musicEvent, {action: "play"}); }, 500);
 const nextSong = throttle(()=>{ sendEvent(musicEvent, {action: "next"}); }, 500);
@@ -221,9 +224,6 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
   musicEvent = new CustomEvent("spotify", {detail: {}});
 
   document.addEventListener("spotify", async (event) => {
-    const user = JSON.parse(sessionGet("current_user"));
-    if(!user || !user.user_id || (user.active_token != "spotify")){ return; }
-
     switch(event.detail.action){
       case "start": 
         await loadSpotifyPlayer();
