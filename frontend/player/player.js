@@ -51,10 +51,10 @@ function updatePlayer(state){
   // playing track is from. Also update the content's DOM if needed.
   p_track = p_track_list[state.track_id];
   if(p_track){
-    p_title.innerHTML = `Disc ${p_track.disc} | Track ${p_track.number} | ${p_track.name} | Album: ${state.album_name}`;
+    p_title.innerHTML = `Disc ${p_track.disc} | Track ${p_track.number} | ${p_track.name} | ${state.album_name}`;
     sendEvent(updateJS, {script: "player", track_id: state.track_id});
   }else{
-    p_title.innerHTML = `Remotely playing: ${state.track_name} by ${state.artist_name} | Album: ${state.album_name}`;
+    p_title.innerHTML = `Remotely playing: ${state.track_name} by ${state.artist_name} | ${state.album_name}`;
   }
 
   // Play button image update
@@ -69,8 +69,8 @@ function updateProgress(){
   const current = progress.time_pos; 
   const end = progress.time_end;
 
-  p_progress.style.width = (current < end ) ?  `${100 * current/end}%` : "100%";
-  progress.time_pos = ( current < end ) ? current + 1000 : end;
+  p_progress.style.width = (current < end) ?  `${100 * current/end}%` : "100%";
+  progress.time_pos = (current + 1000 < end) ? current + 1000 : end;
 
   p_start.innerHTML = dayjs(current).format("mm:ss");
   p_end.innerHTML = dayjs(end).format("mm:ss");
@@ -102,15 +102,13 @@ function setVolume(event){
     default: current_volume = (event.clientX - vol_bar.left) / vol_bar.width;
   }
   
-  localSet("volume", (current_volume));
+  localSet("volume", current_volume);
   updateVolume();
-  sendEvent(musicEvent, {action: "volume", volume: parseFloat(current_volume / 3)});
 }
 
 function toggleVolume(){
-  current_volume = current_volume == 0 ? parseFloat(localGet("volume")): 0;
+  current_volume = current_volume == 0 ? parseFloat(localGet("volume")) : 0;
   updateVolume();
-  sendEvent(musicEvent, {action: "volume", volume: parseFloat(current_volume / 3)});
 }
 
 function trackVolume(event){
@@ -120,7 +118,7 @@ function trackVolume(event){
 
 function sendVolume(){
   window.removeEventListener('mousemove', setVolume);
-  sendEvent(musicEvent, {action: "volume", volume: parseFloat(current_volume / 3)});
+  sendEvent(musicEvent, {action: "volume", volume: current_volume});
 }
 
 function updateVolume(){
@@ -138,7 +136,7 @@ function updateVolume(){
 }
 
 async function loadAlbum(load_album){
-  current_volume = parseFloat(localGet("volume")) / 3 || 0.25;
+  current_volume = parseFloat(localGet("volume")) || 0.25;
 
   if(!p_album || p_album.id != load_album.id){
     p_album = load_album;
@@ -239,7 +237,8 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
       case "pause": player.pause(); break;
       case "resume": player.resume(); break;
       case "seek": player.seek(event.detail.seek); break;
-      case "volume": player.setVolume(event.detail.volume); break;
+      // Spotify's webplayer doesn't do sound normalization, so audio can be REALLY loud at 1, we reduce the sound with division
+      case "volume": player.setVolume(event.detail.volume / 3); break; 
       case "update": player.getCurrentState().then((state) => updateSpotifyPlayer(state)); break;
       case "disconnect": player.disconnect(); break;
     }

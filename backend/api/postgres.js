@@ -38,10 +38,9 @@ async function query(query, values){
 
 // Pasipo Database
 async function addAlbum(album){
-
     const album_query = 
-      `INSERT INTO albums(id, name, image, url, artists, genres, track_list)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING`;
+      `INSERT INTO albums(id, name, image, url, artists, genres, track_list, release_date)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO NOTHING`;
 
     const album_values = [   
             album.id, 
@@ -50,10 +49,10 @@ async function addAlbum(album){
             album.url,
             album.artists,
             album.genres, 
-            album.track_list];
+            album.track_list,
+            album.release_date];
     
     query(album_query, album_values);
-
 }
 
 async function getAlbum(album_id){

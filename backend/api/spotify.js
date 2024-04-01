@@ -69,14 +69,13 @@ async function loadTrack(album_id, track_pos, user_token){
 async function getArtists(album_artists){
   let artists = [];
   for(const album_artist of album_artists){
-    const artist_response = await fetch(`https://api.spotify.com/v1/artists/${album_artist.id}`,
-    { 
+    const artist_response = await fetch(album_artist.href, { 
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${client.access_token}`}
     });
 
-    spotify_artist = await(await artist_response.json());
+    spotify_artist = await artist_response.json();
 
     artist_info = {
       'id': spotify_artist.id,
@@ -91,28 +90,19 @@ async function getArtists(album_artists){
   return artists;
 }
 
-async function getTracklist(album_id){
-  const response = await fetch(`https://api.spotify.com/v1/albums/${album_id}/tracks?limit=50`, 
-  {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${client.access_token}`
-    }
-  });
-
-  let result = await response.json();
-  let spotify_track_list = result.items;
+async function getTracklist(album_tracks){
+  let spotify_track_list = album_tracks.items;
 
   // Grabbing other tracks with "next" urls if tracklist has more than 50 tracks
-  if(result.next){
-    while(result.next){
-      const response = await fetch(result.next, {
+  if(album_tracks.next){
+    while(album_tracks.next){
+      const response = await fetch(album_tracks.next, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${client.access_token}`}
         });
-      result = await response.json();
-      spotify_track_list = spotify_track_list.concat(result.items);
+      album_tracks = await response.json();
+      spotify_track_list = spotify_track_list.concat(album_tracks.items);
     }
   }
 
@@ -124,7 +114,9 @@ async function getTracklist(album_id){
       'url': track.external_urls['spotify'],
       'length': track.duration_ms, 
       'disc': track.disc_number, 
-      'number': track.track_number
+      'number': track.track_number,
+      'preview' : track.preview_url,
+      'explicit' : track.explicit
     };
     track_list.push(track_info);
   });
@@ -137,7 +129,7 @@ async function albumSearch(album_query){
     client = await authorize(null);
   }
   
-  const album_response = 
+  let search_response = 
     await fetch(`https://api.spotify.com/v1/search?query=${album_query}&type=album`, 
       { 
         method: 'GET',
@@ -145,32 +137,39 @@ async function albumSearch(album_query){
           'Authorization': `Bearer ${client.access_token}`}
       });
 
-  spotify_response = await(await album_response.json());
+  let search_results = await search_response.json();
 
-  // Empty query response
-  if(spotify_response.error){ 
-    return null;
-  }
+  if(search_results.error){ return null; }
 
-  spotify_albums = spotify_response.albums;
+  const spotify_albums = search_results.albums;
 
-  let album;
-  for(let i = 0; i <= spotify_albums.total; i++){
-    
-    // Exit if no albums or all albums have less than 6 tracks 
-    if(i == spotify_albums.total){
-      return null;
+  for(let i = 0; i <= spotify_albums.items.length; i++){
+    // If no albums, or all albums were too short, assume the query was an album id
+    if(i == spotify_albums.items.length){
+      album_id = album_query;
+      break;
     }    
 
     // Take first album with 6 or more tracks
     if(spotify_albums.items[i].total_tracks > 5){
-      album = spotify_albums.items[i];
+      album_id = spotify_albums.items[i].id; 
       break;
     }
   }
 
+  const spotify_album = 
+    await fetch(`https://api.spotify.com/v1/albums/${album_id}`, 
+      { 
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${client.access_token}`}
+      });
+
+  const album = await spotify_album.json(); 
+  if(album.error){ return null; }
+
   const artists = await getArtists(album.artists);
-  const track_list = await getTracklist(album.id);
+  const track_list = await getTracklist(album.tracks);
 
   search_result = { 
       'id': album.id,
@@ -178,9 +177,10 @@ async function albumSearch(album_query){
       'image': album.images[0].url,
       'url': album.external_urls['spotify'],
       'artists': artists,
-      'genres': artists[0].genres,
+      'genres': album.genres || artists[0].genres,
       'track_list': track_list,
-      'aliases': [album_query]
+      'aliases': [album_query],
+      'release_date' : album.release_date
   };
   return search_result;
 }

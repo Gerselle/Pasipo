@@ -42,7 +42,7 @@ async function addAlbum(album, query){
 async function query(album_query){
   const query = {
     'q'         : album_query,
-    'query_by'  : 'name,artists.name,track_list.name,aliases',
+    'query_by'  : 'name,artists.name,track_list.name,aliases,id',
     'pre_segmented_query': true,
     'drop_tokens_threshold': 0
   }
@@ -50,7 +50,7 @@ async function query(album_query){
   let query_result = await client.collections('albums').documents().search(query)
                                  .catch(e => {});
 
-  if(!query_result) return                              
+  if(!query_result) { return null; }
                               
   if(query_result.hits.length != 0){
     let response = [];

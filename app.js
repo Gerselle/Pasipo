@@ -258,7 +258,7 @@ app.get("/logout", async function(req, res){
 });
 
 app.post("/search", async function(req, res){
-  const query = req.body.album_query.toLowerCase();
+  const query = req.body.album_query;
   const check_ts = await typesense.query(query);
   
   if(check_ts){
