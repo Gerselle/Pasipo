@@ -21,6 +21,7 @@
     <link id="focus_css" rel="stylesheet">
 
     <script type="module" src="/player/player.js" defer></script>
+    <link rel="stylesheet" href="/player/player.css">
 </head>
 
 <body class="dark">
@@ -32,7 +33,7 @@
   <div class="layout">
     <div class="no-select top-bar" id="top_bar">
       <button type="button" id="menu"><img src="/images/menu.svg"></button>
-      <div class="search">
+      <div class="search" id="search">
         <div class="row">
             <input type="text" id="search_bar" placeholder="Search for an album..." autocomplete="off">
             <button id="search_button" type="button"><img src="/images/search.svg"></button>
@@ -42,7 +43,33 @@
       <button type="button" class="icon" id="icon" onclick="iconClick()"></button>
     </div>
     
-    <div class="no-select player" id="player"></div>
+    <div class="no-select player" id="player">
+      <div class="p-control-bar">
+        <div class="p-buttons">
+          <div class="p-playback">
+            <div class="p-button prev" id="p_prev"><img style="transform:rotate(180deg);" src="/player/next.svg" alt="prev"></div>
+            <div class="p-button play" id="p_play"><img src="/player/play.svg" alt="play"></div>
+            <div class="p-button next" id="p_next"><img src="/player/next.svg" alt="next"></div>
+          </div>
+          <div class="p-volume">
+            <div class="p-button volume" id="p_volume"><img src="/player/vol1.svg" alt="volume"></div>
+            <div class="p-bar volume" id="p_vol_bar">
+              <div class="p-progress" id="p_vol_level"></div>
+              <div class="p-dot volume" id="p_vol_dot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="p-track">
+          <div class="p-time" id="p_start">--:--</div>
+          <div class="p-bar scrobble" id ="p_scr_bar">
+            <div class="p-progress" id="p_progress"></div>
+            <div class="p-title" id="p_title">No Song Playing</div>
+          </div>
+          <div class="p-time" id="p_end">--:--</div>
+        </div>
+      </div>
+    </div>
+
     <div class="content" id="content"></div>
     
     <div class="profile" id="profile" style="display: none;">

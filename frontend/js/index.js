@@ -1,12 +1,13 @@
-let current_user;
+let CURRENT_USER;
+const ERROR_LENGTH = 3000;
 
 document.addEventListener("DOMContentLoaded", async (event) => {
   toggleDarkMode(localStorage.getItem("color_mode"));
   await dbStart();
   await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/check`)
   .then(async(response) => {
-    current_user = await response.json();
-    sessionSet("current_user", JSON.stringify(current_user));
+    CURRENT_USER = await response.json();
+    sessionSet("current_user", JSON.stringify(CURRENT_USER));
     updateScreen();
   });
 });
@@ -18,14 +19,15 @@ function localGet(key){return localStorage.getItem(key)};
 function localSet(key, value){return localStorage.setItem(key, value)};
 function updateScreen(){
   sendEvent(updateJS, {script: docId("content").value});
-  current_user = JSON.parse(sessionGet("current_user"));
-  if(current_user.profile_image){
-    docId("icon").innerHTML = `<img src="${current_user.profile_image}" alt="icon">`;
+  CURRENT_USER = JSON.parse(sessionGet("current_user"));
+  if(CURRENT_USER.profile_image){
+    docId("icon").innerHTML = `<img src="${CURRENT_USER.profile_image}" alt="icon">`;
   }else{
-    docId("icon").innerHTML = current_user.user_name;
+    docId("icon").innerHTML = CURRENT_USER.user_name;
   }
 
-  player.style.display = current_user.active_token ? "flex" : "none";
+  if(CURRENT_USER.active_token){ sendEvent(playerEvent, {action: "start"}); }
+  player.style.display = CURRENT_USER.active_token ? "flex" : "none";
 }
 
 function debounce(func, timeout){
@@ -49,6 +51,27 @@ function throttle(func, timeout) {
       }, timeout);
     }
   };
+}
+
+function displayError(target, message){
+  if(!docId("err_msg")){
+    const element = target || document.body;
+    element_pos = element.getBoundingClientRect();
+    const error_div = document.createElement("div");
+    Object.assign(error_div.style, {
+      left: `${element_pos.x + element_pos.width/2}px`,
+      top: `${element_pos.y + element_pos.height/2}px`,
+    });
+
+    error_div.id = "err_msg";
+    error_div.className = "no-select error";
+    error_div.innerHTML = message
+    document.body.append(error_div);
+  
+    setTimeout(() => {
+      err_msg.remove();
+    }, ERROR_LENGTH);
+  }
 }
 
 function toggleDarkMode(load_mode = null){
@@ -169,12 +192,10 @@ async function requestAccess(event){
     const access_response = await response.json();
 
     if(access_response.error){
-      alert(access_response.error);
+      displayError(docId("focus"), access_response.error);
     }else{
       background_blur.style.display = "none";
-      if(!userLoggedIn()){ // Local user logged into an account
-        pushUser();
-      }
+      if(!userLoggedIn()){ pushUser(); } // Local user logged into an account
       sessionSet("current_user", JSON.stringify(access_response));
       pullUser();
       updateScreen();
@@ -206,7 +227,7 @@ async function oAuth(event){
     .then(async (response) => {
       const redirect = await response.json();
       if(redirect.error){
-        alert(redirect.error);
+        displayError(docId("focus"), redirect.error);
       }else{
         window.location.href = redirect.url;
       }
@@ -214,7 +235,7 @@ async function oAuth(event){
 }
 
 function userLoggedIn(){
-  return current_user.user_id ? true : false;
+  return CURRENT_USER.user_id ? true : false;
 }
 
 function clearUser(){

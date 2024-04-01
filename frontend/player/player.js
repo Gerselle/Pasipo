@@ -1,6 +1,5 @@
 let service_player;
-let player_interval; // Refreshes player token
-let p_track_list;
+let p_track_list = {};
 let p_track;
 let p_album;
 let musicEvent;
@@ -10,12 +9,9 @@ let progress = {time_pos: 0, time_end: 0};
 document.addEventListener("player", async (event) => {
   switch(event.detail.action){
     case "start" :
-      await fetch(`/player/player.html`).then( async(response) => {
-        player.innerHTML = await response.text();
-        player.addEventListener("click", playerUpdate);
-        p_vol_bar.addEventListener("mousedown", trackVolume);
-        window.addEventListener('mouseup', sendVolume);
-      });
+      player.addEventListener("click", playerUpdate);
+      p_vol_bar.addEventListener("mousedown", trackVolume);
+      window.addEventListener('mouseup', sendVolume);
       sendEvent(musicEvent, {action: "start"});
     break;
     case "loadAlbum": loadAlbum(event.detail.data); break;
@@ -25,8 +21,13 @@ document.addEventListener("player", async (event) => {
   }
 });
 
+window.onbeforeunload = function(){ 
+  if(service_player){ sendEvent(musicEvent, {action: "disconnect"}); }
+  if(progress_interval){ clearInterval(progress_interval); }
+};
+
 function playerUpdate(event){
-  if(!current_user || !current_user.active_token){ return; }
+  if(!CURRENT_USER || !CURRENT_USER.active_token){ return; }
   const target = event.target.closest('[id]');
   switch(target){
     case p_play: playTrack(); break;
@@ -88,6 +89,7 @@ function setTime(event){
   const click_pos_ratio = event.offsetX / p_scr_bar.offsetWidth;
   const seek_time = Math.floor(progress.time_end * click_pos_ratio);
   sendEvent(musicEvent, {action: "seek", seek: seek_time});
+  sendEvent(musicEvent, {action: "resume"});
 }
 
 function setTrack(track_num){
@@ -98,6 +100,8 @@ let current_volume;
 
 function setVolume(event){
   const vol_bar = p_vol_bar.getBoundingClientRect();
+  p_vol_dot.style.display = "flex";
+  p_vol_level.style.backgroundColor = "var(--primary-200)";
 
   switch(true){
     case (event.clientX < vol_bar.left): current_volume = 0; break;
@@ -120,6 +124,8 @@ function trackVolume(event){
 }
 
 function sendVolume(){
+  p_vol_dot.style.display = "none";
+  p_vol_level.style.backgroundColor = "var(--bg-300)";
   window.removeEventListener('mousemove', setVolume);
   sendEvent(musicEvent, {action: "volume", volume: current_volume});
 }
@@ -136,10 +142,12 @@ function updateVolume(){
 
   volume_img.src = `/player/${vol_num}.svg`;
   p_vol_dot.style.left = `${Math.floor(100 * current_volume)}%`;
+  p_vol_level.style.width = `${Math.floor(100 * current_volume)}%`;
 }
 
 async function loadAlbum(load_album){
   current_volume = parseFloat(localGet("volume")) || 0.33;
+  updateVolume();
 
   if(!p_album || p_album.id != load_album.id){
     p_album = load_album;
@@ -152,13 +160,6 @@ async function loadAlbum(load_album){
     if(service_player){ sendEvent(musicEvent, {action: "update"}); }
   }
 }
-
-window.onbeforeunload = function()
-{ 
-    if(service_player){ sendEvent(musicEvent, {action: "disconnect"}); }
-    if(player_interval){ clearInterval(player_interval); }
-    if(progress_interval){ clearInterval(progress_interval); }
-};
 
 // Spotify functions
 window.onSpotifyWebPlaybackSDKReady = async () =>{
@@ -201,6 +202,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
   }
 
   function updateSpotifyPlayer(state){
+    if(!state){ return; }
     const current_track = state.track_window.current_track;
     const player_state = {
       music_service: "spotify",

@@ -1,16 +1,13 @@
 let playing_row;
-let content_album;
-const content_audio = new Audio();
-content_audio.autoplay = true;
-
+let WEBSITE_ALBUM;
+const WEBSITE_AUDIO = new Audio();
+WEBSITE_AUDIO.autoplay = true;
 
 async function start(){
   await parseDayPath();
   await dayListeners();
-  current_user = JSON.parse(sessionGet("current_user"))
-  if(!current_user){ return; }
-  if(current_user.active_token){ sendEvent(playerEvent, {action: "start"}); }
-  docId("player").style.display = current_user.active_token ? "flex" : "none";
+  CURRENT_USER = JSON.parse(sessionGet("current_user"))
+  if(!CURRENT_USER){ return; }
 }
 
 document.addEventListener("update", async (update) => {
@@ -29,15 +26,21 @@ docId("album_tracklist").addEventListener("click", (event) => {
   const row = event.target.closest("tr");
   const track_number = row.getAttribute("track");
 
-  if(current_user.active_token){
+  if(CURRENT_USER.active_token){
     sendEvent(playerEvent, {action: "setTrack", data: track_number});
   }else{
     if(playing_row != row){
-      content_audio.src = content_album.track_list[track_number].preview;
-      content_audio.volume = localGet("volume") || 0.25;
-      content_audio.load();
+      const preview =  WEBSITE_ALBUM.track_list[track_number].preview;
+      if(!preview){
+        displayError(row, "No preview audio available for album.");
+      }else{
+        WEBSITE_AUDIO.src = preview;
+        WEBSITE_AUDIO.volume = localGet("volume") || 0.25;
+        WEBSITE_AUDIO.load();
+      }
+
     }else{
-      content_audio.paused ? content_audio.play() : content_audio.pause();
+      WEBSITE_AUDIO.paused ? WEBSITE_AUDIO.play() : WEBSITE_AUDIO.pause();
     }
   }
   
@@ -50,27 +53,30 @@ docId("album_tracklist").addEventListener("click", (event) => {
 async function parseDayPath(){
   const path = window.location.pathname;
   let path_user = path.split("/")[1] || "local";
- 
-  if(path_user === "local"){
-    current_user = JSON.parse(sessionGet("current_user"));
-    sessionSet("viewed_user", JSON.stringify({is_current_user: true, user_name: current_user.user_name}));
-  }else{
-    await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/viewing/${path_user}`)
-          .then(async(response) => {
-              const viewed_user = await response.json();
-              sessionSet("viewed_user", JSON.stringify(viewed_user));
-              if(viewed_user.error){
-                alert(viewed_user.error)
-                sessionSet("viewed_user", JSON.stringify({user_name: "local"}));
-              }
-            });
-  }
-  
   const path_date = path.substring(path.indexOf("/", 2) + 1);
   const today = dayjs(path_date).isValid() ? dayjs(path_date) : dayjs();
   sessionSet("selected_date", today.format("MMM DD, YYYY"));
   sessionSet("calendar_date", today.startOf('month').format("MMM DD, YYYY"));
   sessionSet("selected_album", null);
+ 
+  if(path_user === "local"){
+    CURRENT_USER = JSON.parse(sessionGet("current_user"));
+    sessionSet("viewed_user", JSON.stringify({is_current_user: true, user_name: CURRENT_USER.user_name}));
+  }else{
+    await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/viewing/${path_user}`)
+          .then(async(response) => {
+            let viewed_user = await response.json();
+            if(viewed_user.error){
+              viewed_user = {user_name: "local", albums: {}, ratings: {}};
+              displayError(null, `User ${capitalize(path_user)} not found, redirecting...`);
+            }
+            sessionSet("viewed_user", JSON.stringify(viewed_user));
+            setTimeout(() => {
+              window.location.pathname = `/local${today.format("/YYYY/M/D")}`
+            }, ERROR_LENGTH);
+          });
+  }
+  
   updateAlbum();
   updateCalendar();
 }
@@ -400,7 +406,7 @@ async function searchAlbum(event = null) {
     sessionSet("selected_album", JSON.stringify(album));
     updateAlbum(album);
   }else{
-    alert("Error in finding album");
+    displayError(docId("search"), "Error in finding album, please use another query term.");
   }
 }
 
@@ -495,7 +501,7 @@ async function displayAlbum(album){
   
     tracklist.innerHTML = tracklist_update;
     sendEvent(playerEvent, {action: "loadAlbum", data: album});
-    content_album = album;
+    WEBSITE_ALBUM = album;
   }
 
   docId("album").style.display = album ? "flex" : "none";
