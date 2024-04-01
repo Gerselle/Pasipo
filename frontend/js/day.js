@@ -431,12 +431,6 @@ async function updateAlbum(set_album = null){
   displayAlbum(album);
 }
 
-const tracks = docId("album_tracklist");
-
-tracks.addEventListener("dragstart", () => {tracks.classList.add("draggable"); })
-tracks.addEventListener("dragend", () => {tracks.classList.remove("draggable"); })
-
-
 async function displayAlbum(album){
   if(album){
     const album_img = docId("album_img");
@@ -471,7 +465,7 @@ async function displayAlbum(album){
     const tracklist = docId("album_tracklist");
     tracklist.innerHTML = "";
   
-    let tracklist_update = `<tr><th colspan="3" id="album_secret">${dayjs().format("MM/DD")} - ${album.name} - ${album.artists[0].name} - ${album.genres}</th></tr>\n\t\t`; 
+    let tracklist_update = `<tr><th colspan="3" id="album_secret">${dayjs().format("MM/DD")} - ${album.name} - ${album.artists[0].name} - ${genres}</th></tr>\n\t\t`; 
 
     for (let i = 0; i < album.track_list.length; i++){
       tracklist_update += 

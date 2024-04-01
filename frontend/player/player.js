@@ -136,7 +136,7 @@ function updateVolume(){
 }
 
 async function loadAlbum(load_album){
-  current_volume = parseFloat(localGet("volume")) || 0.25;
+  current_volume = parseFloat(localGet("volume")) || 0.33;
 
   if(!p_album || p_album.id != load_album.id){
     p_album = load_album;
@@ -167,7 +167,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
     player = new Spotify.Player({
       name: 'Paispo Web Player',
       getOAuthToken: cb => { cb(token.access_token); },
-      volume: parseFloat(localGet("volume")) / 3 || 0.25
+      volume: parseFloat(localGet("volume")) || 0.33
     });
 
     player.addListener('ready', ({ device_id }) => {
@@ -237,8 +237,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
       case "pause": player.pause(); break;
       case "resume": player.resume(); break;
       case "seek": player.seek(event.detail.seek); break;
-      // Spotify's webplayer doesn't do sound normalization, so audio can be REALLY loud at 1, we reduce the sound with division
-      case "volume": player.setVolume(event.detail.volume / 3); break; 
+      case "volume": player.setVolume(event.detail.volume); break; 
       case "update": player.getCurrentState().then((state) => updateSpotifyPlayer(state)); break;
       case "disconnect": player.disconnect(); break;
     }

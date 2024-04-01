@@ -170,6 +170,7 @@ async function albumSearch(album_query){
 
   const artists = await getArtists(album.artists);
   const track_list = await getTracklist(album.tracks);
+  const genres = album.genres.length > 0 ? album.genres : artists[0].genres
 
   search_result = { 
       'id': album.id,
@@ -177,7 +178,7 @@ async function albumSearch(album_query){
       'image': album.images[0].url,
       'url': album.external_urls['spotify'],
       'artists': artists,
-      'genres': album.genres || artists[0].genres,
+      'genres': genres,
       'track_list': track_list,
       'aliases': [album_query],
       'release_date' : album.release_date
