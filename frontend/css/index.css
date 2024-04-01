@@ -285,15 +285,12 @@ a:hover{
 
 .content{
   width: 100%;
-  max-width: var(--max-width);
   flex-grow: 1;
-  max-height: calc(100dvh - 50px);
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow: auto;
 }
-
 
 /* Transition from landscape to portrait */
 @media (max-aspect-ratio: 1) {

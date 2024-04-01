@@ -1,4 +1,4 @@
-let player; // Service player
+let service_player;
 let player_interval; // Refreshes player token
 let p_track_list;
 let p_track;
@@ -11,8 +11,8 @@ document.addEventListener("player", async (event) => {
   switch(event.detail.action){
     case "start" :
       await fetch(`/player/player.html`).then( async(response) => {
-        album_player.innerHTML = await response.text();
-        album_player.addEventListener("click", playerUpdate);
+        player.innerHTML = await response.text();
+        player.addEventListener("click", playerUpdate);
         p_vol_bar.addEventListener("mousedown", trackVolume);
         window.addEventListener('mouseup', sendVolume);
       });
@@ -149,13 +149,13 @@ async function loadAlbum(load_album){
       p_track_list[track.id] = track;
     });
 
-    if(player){ sendEvent(musicEvent, {action: "update"}); }
+    if(service_player){ sendEvent(musicEvent, {action: "update"}); }
   }
 }
 
 window.onbeforeunload = function()
 { 
-    if(player){ sendEvent(musicEvent, {action: "disconnect"}); }
+    if(service_player){ sendEvent(musicEvent, {action: "disconnect"}); }
     if(player_interval){ clearInterval(player_interval); }
     if(progress_interval){ clearInterval(progress_interval); }
 };
@@ -164,40 +164,40 @@ window.onbeforeunload = function()
 window.onSpotifyWebPlaybackSDKReady = async () =>{
 
   const loadSpotifyPlayer = async () => {
-    if(player){ await player.disconnect() };
+    if(service_player){ await service_player.disconnect() };
     const response = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/token/spotify`);
     const token = await response.json();
-    player = new Spotify.Player({
+    service_player = new Spotify.Player({
       name: 'Paispo Web Player',
       getOAuthToken: cb => { cb(token.access_token); },
       volume: parseFloat(localGet("volume")) || 0.33
     });
 
-    player.addListener('ready', ({ device_id }) => {
+    service_player.addListener('ready', ({ device_id }) => {
       fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/loadplayer/spotify/${device_id}`)
     });
 
-    player.addListener('player_state_changed', (state) => updateSpotifyPlayer(state));
+    service_player.addListener('player_state_changed', (state) => updateSpotifyPlayer(state));
 
-    player.on('initialization_error', ({ message }) => {
+    service_player.on('initialization_error', ({ message }) => {
       console.error('Failed to initialize', message);
     });
   
-    player.on('authentication_error', () => {
+    service_player.on('authentication_error', () => {
       console.error('Failed to authenticate', message);
       loadSpotifyPlayer();
     });
   
-    player.on('account_error', ({ message }) => {
+    service_player.on('account_error', ({ message }) => {
       console.error('Failed to validate Spotify account', message);
     });
   
-    player.on('playback_error', ({ message }) => {
+    service_player.on('playback_error', ({ message }) => {
       console.error('Failed to perform playback', message);
       loadSpotifyPlayer();
     });
 
-    player.connect();
+    service_player.connect();
   }
 
   function updateSpotifyPlayer(state){
@@ -231,15 +231,15 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
         player_interval = setInterval(loadSpotifyPlayer, 1000 * 60 * 59); // Reload player every 59 mins
       break;
       case "load": loadSpotifyTrack(event.detail.album_id, event.detail.track_pos); break;
-      case "play": player.togglePlay(); break;
-      case "next": player.nextTrack(); break;
-      case "prev": player.previousTrack(); break;
-      case "pause": player.pause(); break;
-      case "resume": player.resume(); break;
-      case "seek": player.seek(event.detail.seek); break;
-      case "volume": player.setVolume(event.detail.volume); break; 
-      case "update": player.getCurrentState().then((state) => updateSpotifyPlayer(state)); break;
-      case "disconnect": player.disconnect(); break;
+      case "play": service_player.togglePlay(); break;
+      case "next": service_player.nextTrack(); break;
+      case "prev": service_player.previousTrack(); break;
+      case "pause": service_player.pause(); break;
+      case "resume": service_player.resume(); break;
+      case "seek": service_player.seek(event.detail.seek); break;
+      case "volume": service_player.setVolume(event.detail.volume); break; 
+      case "update": service_player.getCurrentState().then((state) => updateSpotifyPlayer(state)); break;
+      case "disconnect": service_player.disconnect(); break;
     }
   });
 }

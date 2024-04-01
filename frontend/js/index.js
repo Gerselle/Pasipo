@@ -24,6 +24,8 @@ function updateScreen(){
   }else{
     docId("icon").innerHTML = current_user.user_name;
   }
+
+  player.style.display = current_user.active_token ? "flex" : "none";
 }
 
 function debounce(func, timeout){

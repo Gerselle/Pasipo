@@ -41,18 +41,18 @@
       </div>
       <button type="button" class="icon" id="icon" onclick="iconClick()"></button>
     </div>
-  
+    
+    <div class="no-select player" id="player"></div>
     <div class="content" id="content"></div>
+    
     <div class="profile" id="profile" style="display: none;">
       <div class="section"><button type="button" onclick="oAuth(this)" service="spotify" action="acquire">Spotify</button></div>
       <div class="section"><button type="button">Settings</button></div>
       <div class="section"><button type="button"><div onclick="toggleDarkMode()" id="mode">Light Mode</div></button></div>      
       <div class="section"><button type="button" onclick="authorize()" id="authorize">Logout</button></div>
     </div>
-  </div>
-  
-  
 
+  </div>
 </body>
 
 <script src="https://sdk.scdn.co/spotify-player.js" defer></script>

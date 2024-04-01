@@ -10,7 +10,7 @@ async function start(){
   current_user = JSON.parse(sessionGet("current_user"))
   if(!current_user){ return; }
   if(current_user.active_token){ sendEvent(playerEvent, {action: "start"}); }
-  docId("album_player").style.display = current_user.active_token ? "flex" : "none";
+  docId("player").style.display = current_user.active_token ? "flex" : "none";
 }
 
 document.addEventListener("update", async (update) => {
