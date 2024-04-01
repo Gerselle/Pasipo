@@ -186,6 +186,44 @@ async function albumSearch(album_query){
   return search_result;
 }
 
+async function getAlbums(album_ids){
+  let albums = [];
+  
+  await Promise.all(album_ids.map(async(album_set) => {
+    let response = 
+    await fetch(`https://api.spotify.com/v1/albums?ids=${album_set.toString()}`, 
+      { 
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${client.access_token}`}
+      });
+
+    const result = await response.json();
+
+    await Promise.all(result.albums.map(async(album) => {
+      const artists = await getArtists(album.artists);
+      const track_list = await getTracklist(album.tracks);
+      const genres = album.genres.length > 0 ? album.genres : artists[0].genres
+    
+      album_info = { 
+          'id': album.id,
+          'name': album.name,
+          'image': album.images[0].url,
+          'url': album.external_urls['spotify'],
+          'artists': artists,
+          'genres': genres,
+          'track_list': track_list,
+          'aliases': [],
+          'release_date' : album.release_date
+        };
+
+      albums.push(album_info);
+    }));
+  }));
+
+  return albums;
+}
+
 // Uses the Spotify api to obtain a new OAuth token
 // A non null auth_code returns an 'authorization code' token (user)
 // A null auth_code returns a 'client credential' token (pasipo)
@@ -279,6 +317,7 @@ async function refreshToken(token){
 }
 
 module.exports = {
-  albumSearch, loadPlayer, loadTrack,
+  albumSearch, getAlbums,
+  loadPlayer, loadTrack,
   userInfo, tokenUrl, refreshToken
 };

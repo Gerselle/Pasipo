@@ -274,6 +274,14 @@ app.post("/search", async function(req, res){
     }
   }
 });
+app.get("/refresh_albums", async function(req, res){
+  return; // Simple lock for now, make admin accounts and reenable this endpoint
+  const album_ids = await postgres.getAlbumIds();
+  const refreshed_albums = await spotify.getAlbums(album_ids);
+  typesense.refreshAlbums(refreshed_albums);
+  postgres.refreshAlbums(refreshed_albums);
+  res.redirect("/");
+});
 
 app.get("/*", (req, res) => {
   const parts = req.url.split("/");

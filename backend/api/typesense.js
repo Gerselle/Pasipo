@@ -61,5 +61,17 @@ async function query(album_query){
   }
 }
 
+async function refreshAlbums(refreshed_albums){
+  const response = await client.collections('albums').documents().delete({'filter_by': 'id:*'});
+
+  if(!response.error){
+    refreshed_albums.forEach( album => { addAlbum(album, album.id); });
+  }
+}
+
 exports.addAlbum = addAlbum;
 exports.query = query;
+
+module.exports = {
+  addAlbum, refreshAlbums, query
+};

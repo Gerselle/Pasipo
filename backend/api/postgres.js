@@ -22,6 +22,7 @@ async function initialize(){
 }
 
 initialize(); 
+getAlbumIds();
 
 async function query(query, values){
     return new Promise(async (resolve, reject) => {
@@ -58,6 +59,35 @@ async function addAlbum(album){
 async function getAlbum(album_id){
     const album = await query("SELECT * FROM albums WHERE id=$1", [album_id]);
     return album.rows.length > 0 ? album.rows[0] : {error: `No album found for id ${album_id}.`};
+}
+
+async function refreshAlbums(refreshed_albums){
+    const truncate = await query("TRUNCATE albums");
+    if(!truncate.error){
+        refreshed_albums.forEach( album => { addAlbum(album); });
+    }
+}
+
+async function getAlbumIds(service){
+    const albums = await query("SELECT id FROM albums");
+    let album_ids = [];
+
+    if(albums.rows.length > 0){
+        let album_set = [];
+        for(let i = 0; i < albums.rows.length; i++){
+            album_set.push(albums.rows[i].id);
+            if((i + 1) % 20 == 0){
+                album_ids.push(album_set);
+                album_set = [];
+            }
+        }
+        album_ids.push(album_set);
+    }
+    return album_ids;
+}
+
+async function clearAlbums(service){
+    await query("TRUNCATE albums");
 }
 
 // Album/rating info of another user
@@ -315,7 +345,9 @@ async function signupToken(user_info){
 
 module.exports = {
     pool, 
-    addAlbum, getAlbum, getViewedUser,
+    addAlbum, getAlbum,
+    getAlbumIds, refreshAlbums,
+    getViewedUser,
     pullUserAlbums, pushUserAlbums, 
     addUserAlbum, updateUserAlbum, deleteUserAlbum,
     pullUserRatings, pushUserRatings, updateUserRating,
