@@ -1,3 +1,4 @@
+let player_interval;
 let service_player;
 let p_track_list = {};
 let p_track;

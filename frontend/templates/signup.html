@@ -1,12 +1,19 @@
-<div class="access" id="access">
-  <b class="title">Sign Up</b> <button type="button" class="close"><img src="images/close.svg" onclick="toggleAccess()"></button>
-  <div class="info">
-    <input id="user_name" type="text" placeholder="Username/Email">
-    <input id="pass_word" type="password" placeholder="Password">
-    <input id="pass_confirm" type="password" placeholder="Confirm Password">
-    <button onclick="requestAccess(this)" value="signup">Sign Up</button>
+<div class="no-select access" id="access">
+  <div class="top">
+    <b>Sign Up</b> 
+    <button type="button" class="close"><img src="/images/close.svg" onclick="toggleAccess()"></button>
   </div>
+
+  <div class="info">
+    <input id="user_name" type="text" placeholder="Username">
+    <input id="pass_word" type="password" placeholder="Password">
+    <input id="pass_word_confirm" type="password" placeholder="Confirm Password">
+    <button onclick="requestAccess(this)" value="signup">Sign Up</button>
+    <button onclick='oAuth("spotify", "signup")' style="background-color: #1DB954; color: #191414;">Sign Up With Spotify</button>
+  </div>
+  
   <div class="bottom">
-    <b>Have an account?</b> &nbsp; <a class="link" href="/login">Log In</a>
+    <b>Have an account?</b> &nbsp;
+    <b class="clickable-text" onclick="swapAccess(true)">Log In</b>
   </div>
 </div>

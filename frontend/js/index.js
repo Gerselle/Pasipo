@@ -74,6 +74,16 @@ function displayError(target, message){
   }
 }
 
+function isFocused(){ return docId("focus").style.display == "flex"; }
+
+function setFocus(showFocus, child){
+  const focus = docId("focus");
+  const layout = docId("layout");
+  if(child) { focus.innerHTML = child; }
+  focus.style.display = showFocus ? "flex" : "none";
+  layout.style.filter = showFocus ? "blur(10px)" : "none";
+}
+
 function toggleDarkMode(load_mode = null){
   const old_mode =  localStorage.getItem("color_mode");
   let new_mode = load_mode ? load_mode : old_mode === "dark" ? "light" : "dark";
@@ -170,7 +180,7 @@ function dbAccess(store, data, operation = null){
 }
 
 // Code for toggling the user login/signup panel
-const background_blur = docId("background_blur");
+const BACKGROUND_BLUR = docId("background_blur");
 const profile = docId("profile");
 
 async function requestAccess(event){
@@ -194,7 +204,7 @@ async function requestAccess(event){
     if(access_response.error){
       displayError(docId("focus"), access_response.error);
     }else{
-      background_blur.style.display = "none";
+      setFocus(false);
       if(!userLoggedIn()){ pushUser(); } // Local user logged into an account
       sessionSet("current_user", JSON.stringify(access_response));
       pullUser();
@@ -220,9 +230,7 @@ async function authorize(){
   }
 }
 
-async function oAuth(event){
-  const service = event.getAttribute("service");
-  const action = event.getAttribute("action");
+async function oAuth(service, action){
   fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth/${service}/${action}`)
     .then(async (response) => {
       const redirect = await response.json();
@@ -244,14 +252,12 @@ function clearUser(){
 }
 
 async function toggleAccess(){
-  background_blur.style.display = background_blur.style.display == "none" ? "flex" : "none";
-
-  if(background_blur.style.display == "flex"){
+  setFocus(!isFocused());
+  if(isFocused()){
     fetch(`/templates/login.html`)
     .then(async(response) => {
-      const new_html = await response.text();
-      docId("focus").innerHTML = new_html;
-      background_blur.style.display = "flex";
+      const login_html = await response.text();
+      setFocus(true, login_html);
     });
   }
 }

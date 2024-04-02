@@ -43,8 +43,8 @@ app.get("/check", async function(req, res){
 
 async function sessionUser(session){
   let response = {user_id: null, user_name: "local"};
+  const user = await refreshUser(session);
   if(session && session.user){
-    const user = await refreshUser(session);
     response = {
       user_id : user.user_id,
       profile_image: user.profile_image,
@@ -58,10 +58,10 @@ async function sessionUser(session){
 }
 
 async function refreshUser(session){
-  if(session){ 
-    session.user = await postgres.refreshUser(session.user.user_id);
-    return session.user;
-  }
+  if(!session || !session.user){ return null };
+  const refreshed_user = await postgres.refreshUser(session.user.user_id);
+  session.user = refreshed_user.error ? null : refreshed_user;
+  return session.user;
 }
 
 app.get("/token/:service", async function(req, res){
@@ -174,6 +174,7 @@ app.get("/oauth/:service/:action", async function(req, res){
     return;
   }
 
+  // Token url will redirect to /callback
   switch(service){
     case "spotify": res.send(await spotify.tokenUrl(user_id, action)); break;
     default: res.send({error: "Unknown music service."});
@@ -203,6 +204,7 @@ app.get("/callback", async function(req, res){
       break;
     case "signup":
       const signup = await postgres.signupToken(user_info, token);
+      console.log(signup)
       break;
   }
 
@@ -275,7 +277,7 @@ app.post("/search", async function(req, res){
   }
 });
 app.get("/refresh_albums", async function(req, res){
-  return; // Simple lock for now, make admin accounts and reenable this endpoint
+  res.redirect("/"); return; // Simple lock for now, make admin accounts and reenable this endpoint
   const album_ids = await postgres.getAlbumIds();
   const refreshed_albums = await spotify.getAlbums(album_ids);
   typesense.refreshAlbums(refreshed_albums);

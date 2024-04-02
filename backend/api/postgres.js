@@ -327,20 +327,24 @@ async function loginToken(user_info){
 }
 
 async function signupToken(user_info){
-    const check = await loginToken(user_info);
-    if(!check.error) { return };
+    // const check = await loginToken(user_info);
+    // if(!check.error) { return };
 
     const signup = await query(
-        `INSERT INTO users(user_email, profile_name,
+        `INSERT INTO users(user_name, user_email, profile_name,
             ${user_info.service}_id, profile_image, urls, tokens) 
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-         [user_info.service_email,
-          user_info.service_name,
-          user_info.service_id,
-          user_info.service_image,
-          {[user_info.service] : user_info.service_token}]);
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [`user${performance.now().toString().split(".")[1]}`,
+         user_info.service_email,
+         user_info.service_profile_name,
+         user_info.service_id,
+         user_info.service_image,
+         {[user_info.service] : user_info.service_url},
+         {[user_info.service] : user_info.service_token}]);
 
-    console.log(signup);
+    console.log(signup)
+
+    return signup.error ? {error: "Failed to create user."} : {success: "User created."};
 }
 
 module.exports = {

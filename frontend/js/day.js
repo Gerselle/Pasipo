@@ -69,11 +69,11 @@ async function parseDayPath(){
             if(viewed_user.error){
               viewed_user = {user_name: "local", albums: {}, ratings: {}};
               displayError(null, `User ${capitalize(path_user)} not found, redirecting...`);
+              setTimeout(() => {
+                window.location.pathname = `/local${today.format("/YYYY/M/D")}`
+              }, ERROR_LENGTH);
             }
             sessionSet("viewed_user", JSON.stringify(viewed_user));
-            setTimeout(() => {
-              window.location.pathname = `/local${today.format("/YYYY/M/D")}`
-            }, ERROR_LENGTH);
           });
   }
   
@@ -411,6 +411,8 @@ async function searchAlbum(event = null) {
 }
 
 async function updateAlbum(set_album = null){
+  if(!WEBSITE_AUDIO.paused){ WEBSITE_AUDIO.pause(); }
+
   const options_panel = docId("select");
   options_panel.style.display = "none";
   

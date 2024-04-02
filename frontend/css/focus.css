@@ -1,0 +1,54 @@
+/* User login/signup (access) section */
+.access{
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  padding: 25px;
+  justify-items: center;
+  background: var(--bg-200);
+  border-radius: 25px;
+  padding: 10px;
+}
+
+.access .top{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  font-size: xx-large;
+}
+
+.access .close{
+  width: 25px;
+  height: 25px;
+  background: transparent;
+  filter: var(--filter);
+  position: absolute;
+  right: 0px;
+}
+
+.access input{
+  margin: 10px;
+  width: 400px;
+  background-color: var(--bg-300);
+}
+
+.access button{
+  margin: 10px;
+  background: var(--bg-100);
+}
+
+.access .info{
+  display: flex;
+  flex-direction: column;
+  min-height: 350px;
+}
+
+.access .bottom{
+  display: flex;
+  border-top: 2px solid var(--bg-300);
+  width: 400px;
+  justify-content: center;
+  align-content: center;
+  padding: 15px;
+}

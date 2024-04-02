@@ -1,11 +1,12 @@
-<div class="no-select access" id="access">
+<link rel="stylesheet" href="/css/focus.css">
+<div class="access" id="access">
   <div class="top">
     <b>Log In</b> 
-    <button type="button" class="close"><img src="/images/close.svg" onclick="toggleAccess()"></button>
+    <button type="button" class="close"><img src="../images/close.svg" onclick="toggleAccess()"></button>
   </div>
 
   <div class="info">
-    <input id="user_name" type="text" placeholder="Username">
+    <input id="user_name" type="text" placeholder="Username/Email">
     <input id="pass_word" type="password" placeholder="Password">
     <button onclick="requestAccess(this)" value="login">Login</button>
     <button onclick='oAuth("spotify", "login")' style="background-color: #1DB954; color: #191414;">Login With Spotify</button>
@@ -13,7 +14,6 @@
   
   <div class="bottom">
     <b>Need an account?</b> &nbsp;
-    <b class="clickable-text" onclick="swapAccess(false)">Sign Up</b>
+    <b class="clickable-text" onclick="swapAccess(false)">Signup</b>
   </div>
 </div>
-

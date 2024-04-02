@@ -4,7 +4,7 @@ function docId(id){
 
 document.addEventListener("click", (e) => {
   const target = e.target;
-  if(!target.matches("a.link")){ return }
+  if(!target.matches("a")){ return }
   e.preventDefault();
   route(e);
 });
@@ -73,16 +73,16 @@ async function locationHandler(location){
       let target_element = docId("content");
       
       if(["login", "signup"].includes(template)){
-        background_blur.style.display = "flex";
         target_element = docId("focus");
         window.history.pushState({}, "", "/");
+        setFocus(true);
       }
 
       const new_html = await response.text();
 
       if(new_html){
         target_element.innerHTML = new_html;
-        const file_element = background_blur.style.display == "flex" ? "content" : "focus";
+        const file_element =  "content";
         const script = docId(`${file_element}_js`);
         const link = docId(`${file_element}_css`);
 
