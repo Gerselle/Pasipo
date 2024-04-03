@@ -1,4 +1,7 @@
 let CURRENT_USER;
+const WEBSITE_AUDIO = new Audio();
+WEBSITE_AUDIO.autoplay = true;
+WEBSITE_AUDIO.volume = localGet("volume") || 0.25;
 const ERROR_LENGTH = 3000;
 
 document.addEventListener("DOMContentLoaded", async (event) => {

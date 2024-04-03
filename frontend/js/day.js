@@ -1,7 +1,5 @@
 let playing_row;
 let WEBSITE_ALBUM;
-const WEBSITE_AUDIO = new Audio();
-WEBSITE_AUDIO.autoplay = true;
 
 async function start(){
   await parseDayPath();
@@ -35,7 +33,6 @@ docId("album_tracklist").addEventListener("click", (event) => {
         displayError(row, "No preview audio available for album.");
       }else{
         WEBSITE_AUDIO.src = preview;
-        WEBSITE_AUDIO.volume = localGet("volume") || 0.25;
         WEBSITE_AUDIO.load();
       }
 

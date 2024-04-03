@@ -2,40 +2,47 @@ const typesense = require('typesense')
 const dotenv = require('dotenv');
 dotenv.config();
 
-let client = new typesense.Client({
-  'nodes': [{
-    'host': process.env.tshost, 
-    'port': process.env.tsport,      
-    'protocol': 'http'  
-  }],
-  'apiKey': process.env.tsapikey,
-  'connectionTimeoutSeconds': 2
-})
+let CLIENT;
 
-let schema = {
-  'name': 'albums',
-  "enable_nested_fields": true,
-  'fields': [
-    {'name': 'id', 'type': 'string' },
-    {'name': 'name', 'type': 'string' },
-    {'name': 'artists.name', 'type': 'string[]'},
-    {'name': 'track_list.name', 'type': 'string[]'},
-    {'name': 'genres', 'type': 'string[]' },
-    {'name': 'aliases', 'type': 'string[]'}
-  ]
-}
+async function initialize(){
+  CLIENT = new typesense.Client({
+    'nodes': [{
+      'host': process.env.tshost, 
+      'port': process.env.tsport,      
+      'protocol': 'http'  
+    }],
+    'apiKey': process.env.tsapikey,
+    'connectionTimeoutSeconds': 2
+  });
 
-async function addAlbum(album, query){
+  const schema = {
+    'name': 'albums',
+    "enable_nested_fields": true,
+    'fields': [
+      {'name': 'id', 'type': 'string' },
+      {'name': 'name', 'type': 'string' },
+      {'name': 'artists.name', 'type': 'string[]'},
+      {'name': 'track_list.name', 'type': 'string[]'},
+      {'name': 'genres', 'type': 'string[]' },
+      {'name': 'aliases', 'type': 'string[]'}
+    ]
+  }
 
   // If collection exists, error will always occur, makes sure to always catch it
-  try{await client.collections().create(schema);}catch{}
-  
+  try{await CLIENT.collections().create(schema);}catch{}
+}
+
+initialize()
+.then(console.log("Typesense server initialized correctly."))
+.catch((error) => {console.log(`Typesense server failed to initialize due to the following error:\n${error}`)});
+
+async function addAlbum(album, query){
   try{
-    await client.collections('albums').documents().create(album);
+    await CLIENT.collections('albums').documents().create(album);
   }catch(e){
     // Common acronyms will be added as alias to specific album (DSotM => The Dark Side Of The Moon)
     album['aliases'].push(query);
-    await client.collections('albums').documents(album.id).update(album);
+    await CLIENT.collections('albums').documents(album.id).update(album);
   }
 }
 
@@ -47,7 +54,7 @@ async function query(album_query){
     'drop_tokens_threshold': 0
   }
 
-  let query_result = await client.collections('albums').documents().search(query)
+  let query_result = await CLIENT.collections('albums').documents().search(query)
                                  .catch(e => {});
 
   if(!query_result) { return null; }
@@ -62,7 +69,7 @@ async function query(album_query){
 }
 
 async function refreshAlbums(refreshed_albums){
-  const response = await client.collections('albums').documents().delete({'filter_by': 'id:*'});
+  const response = await CLIENT.collections('albums').documents().delete({'filter_by': 'id:*'});
 
   if(!response.error){
     refreshed_albums.forEach( album => { addAlbum(album, album.id); });

@@ -21,8 +21,9 @@ async function initialize(){
     client.release();
 }
 
-initialize(); 
-getAlbumIds();
+initialize()
+.then(console.log("Postgres database initialized correctly."))
+.catch((error) => {console.log(`Postgres database failed to initialize due to the following error:\n${error}`)}); 
 
 async function query(query, values){
     return new Promise(async (resolve, reject) => {
@@ -341,8 +342,6 @@ async function signupToken(user_info){
          user_info.service_image,
          {[user_info.service] : user_info.service_url},
          {[user_info.service] : user_info.service_token}]);
-
-    console.log(signup)
 
     return signup.error ? {error: "Failed to create user."} : {success: "User created."};
 }

@@ -169,8 +169,12 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
     if(service_player){ await service_player.disconnect() };
     const response = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/token/spotify`);
     const token = await response.json();
+    const player_name = 'Paispo Web Player';
+    let player_number = 1;
+    token.devices.forEach(device => { if(device.name === player_name){ player_number++; } });
+
     service_player = new Spotify.Player({
-      name: 'Paispo Web Player',
+      name: `${player_name} ${player_number}`,
       getOAuthToken: cb => { cb(token.access_token); },
       volume: parseFloat(localGet("volume")) || 0.33
     });

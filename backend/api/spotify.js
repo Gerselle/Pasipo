@@ -1,11 +1,25 @@
 const dotenv = require('dotenv');
 dotenv.config();
 
-const client_id = process.env.client_id;
-const client_secret = process.env.client_secret;
-let client;
+const CLIENT_ID = process.env.spotify_client_id;
+const CLIENT_SECRET = process.env.spotify_client_secret;
+const REDIRECT_URI = `http://${process.env.server_ip}:${process.env.server_port}/callback`;
+let CLIENT;
 
-authorize(null).then((token) => {client = token;});
+authorize(null)
+.then((token) => {CLIENT = token; console.log("Spotify api interface loaded correctly.")})
+.catch((error) => {console.log(`Spotify api interface failed to load due to the following error:\n${error}.`)});
+
+async function getDevices(token){
+  const devices_request = await fetch(`https://api.spotify.com/v1/me/player/devices`, {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${token.access_token}` }
+  }).catch((error) => {console.log(error)})
+  
+  const device_response = await devices_request.json();
+
+  return device_response.error ? null : device_response.devices;
+}
 
 async function loadPlayer(device_id, user_token){
 
@@ -72,7 +86,7 @@ async function getArtists(album_artists){
     const artist_response = await fetch(album_artist.href, { 
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${client.access_token}`}
+        'Authorization': `Bearer ${CLIENT.access_token}`}
     });
 
     spotify_artist = await artist_response.json();
@@ -99,7 +113,7 @@ async function getTracklist(album_tracks){
       const response = await fetch(album_tracks.next, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${client.access_token}`}
+            'Authorization': `Bearer ${CLIENT.access_token}`}
         });
       album_tracks = await response.json();
       spotify_track_list = spotify_track_list.concat(album_tracks.items);
@@ -125,8 +139,8 @@ async function getTracklist(album_tracks){
 }
 
 async function albumSearch(album_query){
-  if(client == null || client.expiry_time < Math.floor(Date.now() / 1000 )){
-    client = await authorize(null);
+  if(CLIENT == null || CLIENT.expiry_time < Math.floor(Date.now() / 1000 )){
+    CLIENT = await authorize(null);
   }
   
   let search_response = 
@@ -134,7 +148,7 @@ async function albumSearch(album_query){
       { 
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${client.access_token}`}
+          'Authorization': `Bearer ${CLIENT.access_token}`}
       });
 
   let search_results = await search_response.json();
@@ -162,7 +176,7 @@ async function albumSearch(album_query){
       { 
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${client.access_token}`}
+          'Authorization': `Bearer ${CLIENT.access_token}`}
       });
 
   const album = await spotify_album.json(); 
@@ -195,7 +209,7 @@ async function getAlbums(album_ids){
       { 
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${client.access_token}`}
+          'Authorization': `Bearer ${CLIENT.access_token}`}
       });
 
     const result = await response.json();
@@ -232,13 +246,12 @@ async function authorize(auth_code){
       method: 'POST',        
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base64'))
+        'Authorization': 'Basic ' + (Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'))
       }
     }
 
   if(auth_code){
-    const redirect_uri = `http://localhost:${process.env.server_port}/callback`; 
-    request.body = `grant_type=authorization_code&code=${auth_code}&redirect_uri=${redirect_uri}`;
+    request.body = `grant_type=authorization_code&code=${auth_code}&redirect_uri=${REDIRECT_URI}`;
   }else{
     request.body = `grant_type=client_credentials`;
   }
@@ -246,7 +259,6 @@ async function authorize(auth_code){
   const response = await fetch('https://accounts.spotify.com/api/token', request);
   token = await response.json();
   token.expiry_time = Math.floor(Date.now() / 1000) + token.expires_in;
-
   return token;
 }
 
@@ -281,9 +293,18 @@ async function userInfo(code){
 async function tokenUrl(user_id, token_type){
   const parameters = new URLSearchParams({
     response_type: "code",
-    client_id: process.env.client_id,
-    redirect_uri: `http://localhost:${process.env.server_port}/callback`,
-    scope: `user-read-email user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public streaming app-remote-control`,
+    client_id: CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    scope: `user-read-email 
+            user-read-private
+            playlist-read-private 
+            playlist-read-collaborative
+            playlist-modify-private
+            playlist-modify-public
+            streaming
+            app-remote-control
+            user-read-playback-state
+            `,
     state: `spotify:${user_id}:${token_type}`
   });
 
@@ -297,7 +318,7 @@ async function refreshToken(token){
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
-      'Authorization': 'Basic ' + (new Buffer.from(client_id + ':' + client_secret).toString('base64'))
+      'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'))
     },
     body: new URLSearchParams({
       refresh_token: token.refresh_token,
@@ -318,6 +339,6 @@ async function refreshToken(token){
 
 module.exports = {
   albumSearch, getAlbums,
-  loadPlayer, loadTrack,
+  getDevices, loadPlayer, loadTrack,
   userInfo, tokenUrl, refreshToken
 };

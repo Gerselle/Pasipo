@@ -71,8 +71,10 @@ app.get("/token/:service", async function(req, res){
 
   const user = req.session.user;
   let token = await refreshToken(user, req.params.service);
-  if(token){
-    res.send({access_token: token.access_token, expiry_time: token.expiry_time});
+  token.devices = await spotify.getDevices(token);
+
+  if(!token.error){
+    res.send({access_token: token.access_token, expiry_time: token.expiry_time, devices: token.devices});
   }else{
     res.send({error: `No token found for user.`});
   }
@@ -85,7 +87,7 @@ async function refreshToken(user, set_service = null){
 
   let token = user.tokens[`${service}`];
   if(!token){ return { error: `No token for ${service} found for token refresh.`}; };
-
+  
   if(token.expiry_time > Math.floor(Date.now()/1000)){ return token; }
 
   switch(service){
@@ -203,8 +205,7 @@ app.get("/callback", async function(req, res){
       if(login && !login.error){ req.session.user = login; }
       break;
     case "signup":
-      const signup = await postgres.signupToken(user_info, token);
-      console.log(signup)
+      await postgres.signupToken(user_info, token);
       break;
   }
 
