@@ -38,13 +38,13 @@ app.get("/album_id/:id", async function(req, res){
 });
 
 app.get("/check", async function(req, res){
-  res.send(await sessionUser(req.session));
+  res.json(await sessionUser(req.session));
 });
 
 async function sessionUser(session){
   let response = {user_id: null, user_name: "local"};
   const user = await refreshUser(session);
-  if(session && session.user){
+  if(session && session.user && user){
     response = {
       user_id : user.user_id,
       profile_image: user.profile_image,

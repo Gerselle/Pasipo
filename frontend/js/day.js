@@ -1,50 +1,50 @@
-let playing_row;
+let PLAYING_ROW;
 let WEBSITE_ALBUM;
 
 async function start(){
-  await parseDayPath();
   await dayListeners();
-  CURRENT_USER = JSON.parse(sessionGet("current_user"))
-  if(!CURRENT_USER){ return; }
+  await parseDayPath();
+  if(!CURRENT_USER){ await updateCurrentUser(); }
 }
 
 document.addEventListener("update", async (update) => {
   if(update.detail.script === "day"){
-    update.detail.start ? start() : parseDayPath();
-    update.detail.start = false;
+    update.detail.start ? start() : await parseDayPath();
   }else if (update.detail.script === "player") {
     const track_id = update.detail.track_id;
-    if( playing_row ){ playing_row.classList.remove("playing"); }
-    playing_row = album_tracklist.querySelector(`[track_id="${track_id}"]`);
-    playing_row.classList.add("playing");
+    const new_playing_row = album_tracklist.querySelector(`[track_id="${track_id}"]`);
+    if(new_playing_row){
+      if( PLAYING_ROW ){ PLAYING_ROW.classList.remove("playing"); }
+      new_playing_row.classList.add("playing");
+      PLAYING_ROW = new_playing_row;
+    }
   }
 })
 
 docId("album_tracklist").addEventListener("click", (event) => {
   const row = event.target.closest("tr");
-  const track_number = row.getAttribute("track");
+  if(!row){ return; }
+  const track_index = row.getAttribute("track_index");
 
   if(CURRENT_USER.active_token){
-    sendEvent(playerEvent, {action: "setTrack", data: track_number});
+    sendEvent(playerEvent, {action: "setTrack", data: track_index});
   }else{
-    if(playing_row != row){
-      const preview =  WEBSITE_ALBUM.track_list[track_number].preview;
+    if(PLAYING_ROW == row){
+      WEBSITE_AUDIO.paused ? WEBSITE_AUDIO.play() : WEBSITE_AUDIO.pause();
+    }else{
+      const preview =  WEBSITE_ALBUM.track_list[track_index].preview;
       if(!preview){
         displayError(row, "No preview audio available for album.");
       }else{
         WEBSITE_AUDIO.src = preview;
         WEBSITE_AUDIO.load();
       }
-
-    }else{
-      WEBSITE_AUDIO.paused ? WEBSITE_AUDIO.play() : WEBSITE_AUDIO.pause();
     }
   }
   
-  if( playing_row ){ playing_row.classList.remove("playing"); }
-  playing_row = row;
-  if(!row) { return; }
+  if( PLAYING_ROW ){ PLAYING_ROW.classList.remove("playing"); }
   row.classList.add("playing");
+  PLAYING_ROW = row;
 });
 
 async function parseDayPath(){
@@ -57,7 +57,6 @@ async function parseDayPath(){
   sessionSet("selected_album", null);
  
   if(path_user === "local"){
-    CURRENT_USER = JSON.parse(sessionGet("current_user"));
     sessionSet("viewed_user", JSON.stringify({is_current_user: true, user_name: CURRENT_USER.user_name}));
   }else{
     await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/viewing/${path_user}`)
@@ -88,19 +87,16 @@ function dayListeners(){
       toggleCalendar();
     }
   });
-  
 }
 
 docId("album_rating").addEventListener("mousemove", mouseRating);
 docId("album_rating").addEventListener("mouseout", mouseRating);
 docId("album_rating").addEventListener("mouseover", mouseRating);
 docId("album_rating").addEventListener("click", mouseRating);
-let old_rating;
+let CURRENT_RATING;
 function mouseRating(event){
   const viewed_user = JSON.parse(sessionGet("viewed_user")); 
-  if(!viewed_user.is_current_user){
-    return;
-  }
+  if(!viewed_user.is_current_user){ return; }
 
   switch(event.type){
     case "mousemove":
@@ -108,14 +104,14 @@ function mouseRating(event){
       docId("rating_level").style.width = `${round}%`;
     break;
     case "mouseover":
-      old_rating = docId("rating_level").style.width;
+      CURRENT_RATING = docId("rating_level").style.width;
       break;
     case "mouseout":
-      docId("rating_level").style.width = old_rating;
+      docId("rating_level").style.width = CURRENT_RATING;
       break;
     case "click":
       let new_rating = Math.round((event.offsetX/event.target.offsetWidth) * 10) * 10;
-      old_rating = `${new_rating}%`;
+      CURRENT_RATING = `${new_rating}%`;
       updateRating([new_rating/10]);
     break;
   }
@@ -142,19 +138,21 @@ async function albumOfDate(date){
   if(!date){ return null; }
   const user_date = await dbAccess("user_albums", date, "get");
   if(!user_date){ return null; }
-  return await dbAccess("albums", user_date.id, "get") || await getAlbum(user_date.id);
+  return await dbAccess("albums", user_date.id, "get") || await getAlbum(user_date.id, true);
 }
 
-async function getAlbum(album_id){
+async function getAlbum(album_id, db_checked = false){
   if(!album_id){ return null; }
-
+  
+  // If we already checked the database, don't check it again and instead check with server fetch
+  let db_album = db_checked ? null : await dbAccess("albums", album_id, "get");
+  return db_album ? db_album : await fetchAlbum(album_id);
+  
   async function fetchAlbum(album_id){
     const response = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/album_id/${album_id}`);
     const album = await response.json();
     return album.error ? null : album;
   }
-  
-  return await dbAccess("albums", album_id, "get") || await fetchAlbum(album_id);
 }
 
 function moveDate(increment){
@@ -426,17 +424,15 @@ async function updateAlbum(set_album = null){
   let rating;
 
   if(viewed_user.is_current_user){
-    if(set_album){
-      album = set_album;
-      selected_album = await albumOfDate(selected_date);
-      if(selected_album && selected_album.id !== album.id){
-        current_album.innerHTML = selected_album ? `<span>Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b></span>` : "";
-        current_album.style.display = selected_album ? "flex" : "none";
-        options_panel.style.display = selected_album ? "flex" : "none"; 
-      }
-    }else{
-      album = await albumOfDate(selected_date);
+    selected_album = await albumOfDate(selected_date);
+    album = set_album ? set_album : selected_album;
+    
+    if(selected_album && selected_album.id !== album.id){
+      current_album.innerHTML = selected_album ? `<span>Current Album: <i>${selected_album.name}</i> by <b>${selected_album.artists[0].name}</b></span>` : "";
+      current_album.style.display = selected_album ? "flex" : "none";
+      options_panel.style.display = selected_album ? "flex" : "none"; 
     }
+
     user_rating = album ? await dbAccess("user_ratings", album.id, "get") : null;
     rating = user_rating ? user_rating.rating : null;
   }else{
@@ -489,18 +485,21 @@ async function displayAlbum(album){
   
     let tracklist_update = `<tr><th colspan="3" id="album_secret">${dayjs().format("MM/DD")} - ${album.name} - ${album.artists[0].name} - ${genres}</th></tr>\n\t\t`; 
 
-    for (let i = 0; i < album.track_list.length; i++){
+    album.track_list.forEach(track => {
+      const track_index = album.track_list.indexOf(track);
+
       tracklist_update += 
-      ` <tr track=${i} track_id=${album.track_list[i].id}>
-          <td class="num">${i + 1}</td>
-          <td class="title">${album.track_list[i].name}</td>
+      ` <tr track_index=${track_index} track_id=${track.id}>
+          <td class="num">${track_index + 1}</td>
+          <td class="title">${track.name}</td>
+          <td class="no-select num time">${dayjs(track.length).format("mm:ss")}</td>
         </tr>
       `
-    }
-  
+    });
+
     tracklist.innerHTML = tracklist_update;
-    sendEvent(playerEvent, {action: "loadAlbum", data: album});
     WEBSITE_ALBUM = album;
+    sendEvent(playerEvent, {action: "loadAlbum", data: album});
   }
 
   docId("album").style.display = album ? "flex" : "none";

@@ -50,6 +50,14 @@
   text-decoration: underline;
 }
 
+.ellipsis{
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;  
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
 /* Default for error message box */
 .error{
   font-size: var(--default-font);
@@ -124,7 +132,7 @@ a:hover{
   text-decoration: underline;
 }
 
-.layout{
+.layout{ /* Layout should always be entire viewable screen */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -133,7 +141,7 @@ a:hover{
   overflow: hidden;
 }
 
-.focus{
+.focus{ /* Focus is the (hidden) foreground of website, should always overlay layout */
   position: absolute;
   display: none;
   width: 100dvw;

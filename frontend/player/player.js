@@ -9,7 +9,7 @@ let progress = {time_pos: 0, time_end: 0};
 
 document.addEventListener("player", async (event) => {
   switch(event.detail.action){
-    case "start" :
+    case "start":
       player.addEventListener("click", playerUpdate);
       p_vol_bar.addEventListener("mousedown", trackVolume);
       window.addEventListener('mouseup', sendVolume);
@@ -150,7 +150,7 @@ async function loadAlbum(load_album){
   current_volume = parseFloat(localGet("volume")) || 0.33;
   updateVolume();
 
-  if(!p_album || p_album.id != load_album.id){
+  if(!p_album || (p_album.id != load_album.id)){
     p_album = load_album;
     p_track = load_album.track_list[0];
     p_track_list = {};
@@ -167,11 +167,15 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
 
   const loadSpotifyPlayer = async () => {
     if(service_player){ await service_player.disconnect() };
-    const response = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/token/spotify`);
+    const response = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/token/spotify`)
+      .catch((error) => printDebug(error));
     const token = await response.json();
     const player_name = 'Paispo Web Player';
     let player_number = 1;
-    token.devices.forEach(device => { if(device.name === player_name){ player_number++; } });
+    token.devices.forEach(device => {
+      const device_name = device.name.replaceAll(/ [0-9]+/gi, "");
+      if(device_name === player_name){ player_number++; }
+     });
 
     service_player = new Spotify.Player({
       name: `${player_name} ${player_number}`,
@@ -225,7 +229,8 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
   }
 
   function loadSpotifyTrack(album_id, track_pos){
-     fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/loadtrack/spotify/${album_id}/${track_pos}`);
+     fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/loadtrack/spotify/${album_id}/${track_pos}`)
+     .catch((error) => printDebug(error));
   };
 
   musicEvent = new CustomEvent("spotify", {detail: {}});

@@ -1,7 +1,3 @@
-function docId(id){
-  return id ? document.getElementById(id) : null;
-}
-
 document.addEventListener("click", (e) => {
   const target = e.target;
   if(!target.matches("a")){ return }

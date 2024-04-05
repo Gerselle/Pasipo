@@ -22,8 +22,10 @@ async function getDevices(token){
 }
 
 async function loadPlayer(device_id, user_token){
+  if(!device_id){return {error: "No device id to transfer playback to."} }
+  if(!user_token){ return {error: "No user token to load Spotify player."}; }
 
-  if(device_id && user_token){
+  try{
     const transfer_request = {
       method: 'PUT',
       headers: {
@@ -32,29 +34,23 @@ async function loadPlayer(device_id, user_token){
       },  
       body: JSON.stringify({device_ids: [ device_id ], play: false})
     }
-    try {
-      await fetch(`https://api.spotify.com/v1/me/player`, transfer_request);
-    } catch (error) {
-      console.log(error);
-    }
-    
+
+    fetch(`https://api.spotify.com/v1/me/player`, transfer_request);
+
     const simple_request = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user_token.access_token}` }
     }
-
-    try {
-      fetch(`https://api.spotify.com/v1/me/player/shuffle?state=false&device_id=${device_id}`, simple_request);
-    } catch (error) {
-      console.log(error);
-    }
-
-    try {
-      fetch(`https://api.spotify.com/v1/me/player/repeat?state=off&device_id=${device_id}`, simple_request);
-    } catch (error) {
-      console.log(error);
-    }
+    
+    fetch(`https://api.spotify.com/v1/me/player/shuffle?state=false&device_id=${device_id}`, simple_request);
+    fetch(`https://api.spotify.com/v1/me/player/repeat?state=off&device_id=${device_id}`, simple_request);
+    
+    return {success: "Spotify player loaded properly."}
+  }catch(error){
+    console.log(error);
+    return {error: "Failed to load Spotify player."};
   }
+  
 }
 
 async function loadTrack(album_id, track_pos, user_token){

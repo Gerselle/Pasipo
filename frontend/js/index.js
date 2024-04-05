@@ -1,28 +1,27 @@
+let DATABASE_STORAGE;
 let CURRENT_USER;
 const WEBSITE_AUDIO = new Audio();
 WEBSITE_AUDIO.autoplay = true;
-WEBSITE_AUDIO.volume = localGet("volume") || 0.25;
+WEBSITE_AUDIO.volume = 0.25;
 const ERROR_LENGTH = 3000;
 
-document.addEventListener("DOMContentLoaded", async (event) => {
+document.addEventListener("DOMContentLoaded", async () => {
   toggleDarkMode(localStorage.getItem("color_mode"));
+  await updateCurrentUser();
   await dbStart();
-  await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/check`)
-  .then(async(response) => {
-    CURRENT_USER = await response.json();
-    sessionSet("current_user", JSON.stringify(CURRENT_USER));
-    updateScreen();
-  });
+  await updateLayout();
 });
 
-// Simple helper functions
-function sessionGet(key){return sessionStorage.getItem(key)};
-function sessionSet(key, value){return sessionStorage.setItem(key, value)};
-function localGet(key){return localStorage.getItem(key)};
-function localSet(key, value){return localStorage.setItem(key, value)};
-function updateScreen(){
+// Current user will always either be the session's user or a local user.
+async function updateCurrentUser(){
+  await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/check`)
+        .then( async (response) => { CURRENT_USER = await response.json(); })
+        .catch(() => { CURRENT_USER = {user_id: null, user_name: "local"}; });
+}
+
+// Website graphic update functions
+async function updateLayout(){
   sendEvent(updateJS, {script: docId("content").value});
-  CURRENT_USER = JSON.parse(sessionGet("current_user"));
   if(CURRENT_USER.profile_image){
     docId("icon").innerHTML = `<img src="${CURRENT_USER.profile_image}" alt="icon">`;
   }else{
@@ -31,6 +30,65 @@ function updateScreen(){
 
   if(CURRENT_USER.active_token){ sendEvent(playerEvent, {action: "start"}); }
   player.style.display = CURRENT_USER.active_token ? "flex" : "none";
+}
+
+function setFocus(show_focus, focus_child){
+  const focus = docId("focus");
+  const layout = docId("layout");
+  if(focus_child) { focus.innerHTML = focus_child; }
+  focus.style.display = show_focus ? "flex" : "none";
+  layout.style.filter = show_focus ? "blur(10px)" : "none";
+}
+
+function toggleDarkMode(load_mode = null){
+  const old_mode = localStorage.getItem("color_mode");
+  let new_mode;
+  if(load_mode){
+    new_mode = load_mode;
+  }else{
+    new_mode = old_mode === "dark" ? "light" : "dark";
+  }
+  document.body.className = new_mode;
+  localStorage.setItem("color_mode", new_mode);
+  
+  docId("mode").innerHTML = new_mode === "dark" ? "Light Mode" : "Dark Mode";
+}
+
+function iconClick(){
+  docId("authorize").innerHTML = userLoggedIn() ? "Log Out" : "Log In";
+  docId("profile").style.display = docId("profile").style.display === "none" ? "flex" : "none";
+}
+
+async function toggleAccess(){
+  setFocus(!isFocused());
+  if(isFocused()){
+    fetch(`/templates/login.html`)
+    .then(async(response) => {
+      const login_html = await response.text();
+      setFocus(true, login_html);
+    });
+  }
+}
+
+// General helper functions
+function printDebug(message){ console.log(message); }
+function docId(id){ return id ? document.getElementById(id) : null; }
+function sessionGet(key){return sessionStorage.getItem(key)};
+function sessionSet(key, value){return sessionStorage.setItem(key, value)};
+function localGet(key){return localStorage.getItem(key)};
+function localSet(key, value){return localStorage.setItem(key, value)};
+function userLoggedIn(){ return CURRENT_USER.user_id ? true : false; }
+function isFocused(){ return docId("focus").style.display == "flex"; }
+
+// Capitalizes the first letter of each word in the string
+// e.g. "this is a string" => "This Is A String"
+function capitalize(str){ 
+  if(!str){ return ""; }
+  let result = "";
+  str.split(" ").forEach(word => {
+    result += `${word[0].toUpperCase()}${word.slice(1)} `;
+  });
+  return result.slice(0, result.length - 1);
 }
 
 function debounce(func, timeout){
@@ -56,6 +114,7 @@ function throttle(func, timeout) {
   };
 }
 
+// Displays an error message box under the target element
 function displayError(target, message){
   if(!docId("err_msg")){
     const element = target || document.body;
@@ -77,43 +136,7 @@ function displayError(target, message){
   }
 }
 
-function isFocused(){ return docId("focus").style.display == "flex"; }
-
-function setFocus(showFocus, child){
-  const focus = docId("focus");
-  const layout = docId("layout");
-  if(child) { focus.innerHTML = child; }
-  focus.style.display = showFocus ? "flex" : "none";
-  layout.style.filter = showFocus ? "blur(10px)" : "none";
-}
-
-function toggleDarkMode(load_mode = null){
-  const old_mode =  localStorage.getItem("color_mode");
-  let new_mode = load_mode ? load_mode : old_mode === "dark" ? "light" : "dark";
-  document.body.className = new_mode;
-  localStorage.setItem("color_mode", new_mode);
- 
-  // Updates profile color mode button
-  const update = new_mode === "dark" ? "Light Mode" : "Dark Mode";
-  docId("mode").innerHTML = update;
-}
-
-function iconClick(){
-  docId("authorize").innerHTML = userLoggedIn() ? "Log Out" : "Log In";
-  profile.style.display = profile.style.display === "none" ? "flex" : "none";
-}
-
-function capitalize(str){
-  if(!str){ return ""; }
-  let result = "";
-  str.split(" ").forEach(word => {
-    result += `${word[0].toUpperCase()}${word.slice(1)} `;
-  });
-  return result.slice(0, result.length - 1);
-}
-
-let databaseStorage;
-
+// IndexedDB functions
 function dbStart(){
   return new Promise((resolve, reject) => {
     const request = window.indexedDB.open("database", 1);
@@ -123,7 +146,7 @@ function dbStart(){
     };
   
     request.onsuccess = (event) => {
-      databaseStorage = event.target.result;
+      DATABASE_STORAGE = event.target.result;
       resolve();
     };
   
@@ -141,7 +164,7 @@ function dbAccess(store, data, operation = null){
     if(!data){resolve(null)};
 
     if(operation){
-        const transaction = databaseStorage.transaction([store], "readwrite");
+        const transaction = DATABASE_STORAGE.transaction([store], "readwrite");
         transaction.onerror = (event) => {
           resolve({error: `ObjectStore "${store}" ${operation} error:\n ${event.target.error}`});
         };
@@ -182,10 +205,7 @@ function dbAccess(store, data, operation = null){
   });
 }
 
-// Code for toggling the user login/signup panel
-const BACKGROUND_BLUR = docId("background_blur");
-const profile = docId("profile");
-
+// User login/logout functions
 async function requestAccess(event){
   access_request = {
     "value": event.value,
@@ -209,24 +229,24 @@ async function requestAccess(event){
     }else{
       setFocus(false);
       if(!userLoggedIn()){ pushUser(); } // Local user logged into an account
-      sessionSet("current_user", JSON.stringify(access_response));
+      CURRENT_USER = access_response;
       pullUser();
-      updateScreen();
+      updateLayout();
     }
   });
 }
 
 async function authorize(){
-  profile.style.display = "none";
+  docId("profile").style.display = "none";
   if(userLoggedIn()){ // Logout if logged in
     pushUser();
     fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/logout`)
       .then(async (response) => {   
         const local = await response.json();
         sendEvent(playerEvent, {action: "disconnect"});
-        sessionSet("current_user", JSON.stringify(local)); 
+        CURRENT_USER = local;
         clearUser();
-        updateScreen();
+        updateLayout();
       });
   }else{ // Open login/signup panel
     toggleAccess();
@@ -245,24 +265,10 @@ async function oAuth(service, action){
     });
 }
 
-function userLoggedIn(){
-  return CURRENT_USER.user_id ? true : false;
-}
-
+// User information functions
 function clearUser(){
   dbAccess('user_ratings', null, 'clear');
   dbAccess('user_albums', null, 'clear');
-}
-
-async function toggleAccess(){
-  setFocus(!isFocused());
-  if(isFocused()){
-    fetch(`/templates/login.html`)
-    .then(async(response) => {
-      const login_html = await response.text();
-      setFocus(true, login_html);
-    });
-  }
 }
 
 async function pullUser(){
@@ -300,7 +306,7 @@ async function pullUser(){
       }
     });
 
-    updateScreen();
+    updateLayout();
 }
 
 async function pushUser(){
@@ -334,5 +340,3 @@ async function pushUser(){
     });
   }
 }
-
-
