@@ -33,7 +33,7 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 
-app.get("/album_id/:id", async function(req, res){
+app.get("/album/:id", async function(req, res){
   res.send(await postgres.getAlbum(req.params.id));
 });
 
@@ -159,9 +159,10 @@ app.post("/action", async function(req, res){
 
 });
 
-app.get("/oauth/:service/:action", async function(req, res){
-  const service = req.params.service;
-  const action = req.params.action;
+app.post("/oauth", async function(req, res){
+  const service = req.body.service;
+  const action = req.body.action;
+  const current_path = req.body.current_path;
 
   if(!["login", "signup", "acquire"].includes(action)){
     res.send({error: "OAuth action is invalid."});
@@ -178,7 +179,7 @@ app.get("/oauth/:service/:action", async function(req, res){
 
   // Token url will redirect to /callback
   switch(service){
-    case "spotify": res.send(await spotify.tokenUrl(user_id, action)); break;
+    case "spotify": res.send(await spotify.tokenUrl(user_id, action, current_path)); break;
     default: res.send({error: "Unknown music service."});
   }
 });
@@ -188,6 +189,8 @@ app.get("/callback", async function(req, res){
   const service = split[0];
   const user_id = split[1];
   const token_type = split[2];
+  const current_path = split[3];
+  
   const code = req.query.code;
   let user_info;
 
@@ -209,17 +212,19 @@ app.get("/callback", async function(req, res){
       break;
   }
 
-  res.redirect("/");
+  res.redirect(current_path);
 });
 
 app.get("/loadplayer/:service/:device_id", async function(req, res){
   const user = req.session.user;
+  let response = {error: "No player loaded."};
   if(user){
     const user_token = await refreshToken(user, req.params.service);
     switch(req.params.service){
-      case "spotify": spotify.loadPlayer(req.params.device_id, user_token); break;
+      case "spotify": response = await spotify.loadPlayer(req.params.device_id, user_token); break;
     }
   }
+  res.send(response);
 });
 
 app.get("/loadtrack/:service/:album_id/:track_pos", async function(req, res){
@@ -260,10 +265,10 @@ app.get("/logout", async function(req, res){
   }
 });
 
-app.post("/search", async function(req, res){
-  const query = req.body.album_query;
+app.get("/search/:query", async function(req, res){
+  const query = req.params.query;
   const check_ts = await typesense.query(query);
-  
+
   if(check_ts){
     res.send(check_ts[0]);
   }else{

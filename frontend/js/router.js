@@ -1,6 +1,6 @@
 document.addEventListener("click", (e) => {
   const target = e.target;
-  if(!target.matches("a")){ return }
+  if(!target.matches("a .internal")){ return }
   e.preventDefault();
   route(e);
 });

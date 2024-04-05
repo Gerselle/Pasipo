@@ -286,7 +286,7 @@ async function userInfo(code){
   return user_info;
 }
 
-async function tokenUrl(user_id, token_type){
+async function tokenUrl(user_id, token_type, current_path){
   const parameters = new URLSearchParams({
     response_type: "code",
     client_id: CLIENT_ID,
@@ -301,7 +301,7 @@ async function tokenUrl(user_id, token_type){
             app-remote-control
             user-read-playback-state
             `,
-    state: `spotify:${user_id}:${token_type}`
+    state: `spotify:${user_id}:${token_type}:${current_path}`
   });
 
   return {url: `https://accounts.spotify.com/authorize?` + parameters.toString()};

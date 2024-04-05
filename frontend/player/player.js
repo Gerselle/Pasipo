@@ -1,10 +1,15 @@
+// Variables for manipulating service player, and refreshing tokens
+let musicEvent;
 let player_interval;
 let service_player;
-let p_track_list = {};
-let p_track;
+let service_player_id;
+
+// Keeps track of the album/tracklist that's loaded into the player
 let p_album;
-let musicEvent;
-let progress_interval; // Keeps progress bar in sync with service player
+let p_track_list = {};
+
+// Variables to keep progress bar in sync with service player
+let progress_interval;
 let progress = {time_pos: 0, time_end: 0};
 
 document.addEventListener("player", async (event) => {
@@ -22,7 +27,7 @@ document.addEventListener("player", async (event) => {
   }
 });
 
-window.onbeforeunload = function(){ 
+window.onbeforeunload = function(){
   if(service_player){ sendEvent(musicEvent, {action: "disconnect"}); }
   if(progress_interval){ clearInterval(progress_interval); }
 };
@@ -47,15 +52,15 @@ function updatePlayer(state){
   // State will always update time, but the progress bar only updates if a track
   // is playing to keep sync with the actual music service web player
   progress = {time_pos: state.time_pos, time_end: state.time_end };
+  updateProgress();
   if(progress_interval){ clearInterval(progress_interval); }
   if(state.track_playing){
-    updateProgress();
     progress_interval = setInterval(updateProgress, 1000);
   }
   
   // Update the player's title based on if the user is looking at the album that the 
   // playing track is from. Also update the content's DOM if needed.
-  p_track = p_track_list[state.track_id];
+  const p_track = p_track_list[state.track_id];
   if(p_track){
     p_title.innerHTML = `Disc ${p_track.disc} | Track ${p_track.number} | ${p_track.name} | ${state.album_name}`;
     sendEvent(updateJS, {script: "player", track_id: state.track_id});
@@ -152,12 +157,10 @@ async function loadAlbum(load_album){
 
   if(!p_album || (p_album.id != load_album.id)){
     p_album = load_album;
-    p_track = load_album.track_list[0];
     p_track_list = {};
-    load_album.track_list.forEach(track => {
+    p_album.track_list.forEach(track => {
       p_track_list[track.id] = track;
     });
-
     if(service_player){ sendEvent(musicEvent, {action: "update"}); }
   }
 }
@@ -166,7 +169,7 @@ async function loadAlbum(load_album){
 window.onSpotifyWebPlaybackSDKReady = async () =>{
 
   const loadSpotifyPlayer = async () => {
-    if(service_player){ await service_player.disconnect() };
+    if(service_player){ await service_player.disconnect(); };
     const response = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/token/spotify`)
       .catch((error) => printDebug(error));
     const token = await response.json();
@@ -183,7 +186,8 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
       volume: parseFloat(localGet("volume")) || 0.33
     });
 
-    service_player.addListener('ready', ({ device_id }) => {
+    service_player.addListener('ready', async ({ device_id }) => {
+      service_player_id = device_id;
       fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/loadplayer/spotify/${device_id}`)
     });
 
@@ -251,7 +255,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
       case "seek": service_player.seek(event.detail.seek); break;
       case "volume": service_player.setVolume(event.detail.volume); break; 
       case "update": service_player.getCurrentState().then((state) => updateSpotifyPlayer(state)); break;
-      case "disconnect": service_player.disconnect(); break;
+      case "disconnect": await service_player.disconnect(); break;
     }
   });
 }

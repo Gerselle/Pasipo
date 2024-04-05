@@ -1,8 +1,6 @@
 let DATABASE_STORAGE;
 let CURRENT_USER;
 const WEBSITE_AUDIO = new Audio();
-WEBSITE_AUDIO.autoplay = true;
-WEBSITE_AUDIO.volume = 0.25;
 const ERROR_LENGTH = 3000;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -254,8 +252,16 @@ async function authorize(){
 }
 
 async function oAuth(service, action){
-  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth/${service}/${action}`)
-    .then(async (response) => {
+  console.log(window.location.pathname);
+  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth`, {
+    'method': "POST",
+    'headers': { "Content-Type": "application/json" },
+    'body': JSON.stringify({
+      service: service,
+      action: action,
+      current_path: window.location.pathname
+      })
+   }).then(async (response) => {
       const redirect = await response.json();
       if(redirect.error){
         displayError(docId("focus"), redirect.error);
