@@ -8,3 +8,11 @@ function swapAccess(to_login){
     docId("focus").innerHTML = html; 
   });
 }
+
+function focusNote(){
+  fetch(`/templates/note.html`)
+  .then(async(response) =>{
+    const html = await response.text();
+    docId("focus").innerHTML = html; 
+  });
+}

@@ -252,7 +252,7 @@ async function authorize(){
 }
 
 async function oAuth(service, action){
-  console.log(window.location.pathname);
+
   fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },

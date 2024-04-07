@@ -171,7 +171,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
   const loadSpotifyPlayer = async () => {
     if(service_player){ await service_player.disconnect(); };
     const response = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/token/spotify`)
-      .catch((error) => printDebug(error));
+      .catch((error) => console.log(error));
     const token = await response.json();
     const player_name = 'Paispo Web Player';
     let player_number = 1;
@@ -234,7 +234,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
 
   function loadSpotifyTrack(album_id, track_pos){
      fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/loadtrack/spotify/${album_id}/${track_pos}`)
-     .catch((error) => printDebug(error));
+     .catch((error) => console.log(error));
   };
 
   musicEvent = new CustomEvent("spotify", {detail: {}});

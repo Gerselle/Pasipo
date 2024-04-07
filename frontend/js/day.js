@@ -31,6 +31,36 @@ function setPlayingRow(new_row){
 docId("album_tracklist").addEventListener("click", async (event) => {
   const row = event.target.closest("tr");
   if(!row){ return; }
+
+  switch(event.target.getAttribute("action")){
+    case "save": saveTrack(row); break;
+    case "star": starTrack(row); break;
+    default: playTrack(row);
+  }
+});
+
+function saveTrack(row){
+  if(!row){ return; }
+  const save = row.querySelector(`[action="save"]`);
+  if(!save){ return; }
+
+  save.classList.toggle("show");
+
+  console.log(save);
+}
+
+function starTrack(row){
+  if(!row){ return; }
+  const star = row.querySelector(`[action="star"]`);
+  if(!star){ return; }
+
+  star.classList.toggle("show");
+
+  console.log(star);
+}
+
+function playTrack(row){
+  if(!row){ return; }
   const track_index = row.getAttribute("track_index");
 
   if(CURRENT_USER.active_token){
@@ -55,7 +85,8 @@ docId("album_tracklist").addEventListener("click", async (event) => {
   WEBSITE_AUDIO.load();
   WEBSITE_AUDIO.play();
   setPlayingRow(row);
-});
+}
+
 
 async function parseDayPath(){
   const path = window.location.pathname;
@@ -97,6 +128,10 @@ function dayListeners(){
       toggleCalendar();
     }
   });
+}
+
+function toggleNotes(notes){
+  printDebug(notes)
 }
 
 docId("album_rating").addEventListener("mousemove", mouseRating);
@@ -492,10 +527,14 @@ async function displayAlbum(album){
       ` <tr track_index=${track_index} track_id=${track.id}>
           <td class="num">${track_index + 1}</td>
           <td class="title">${track.name}</td>
+          <td class="no-select icon star" action="star" title="Star ${track.name} on Pasipo"></td>
+          <td class="no-select icon save" action="save" title="Save ${track.name} to ${capitalize(CURRENT_USER.active_token)}"></td>
           <td class="no-select num time">${dayjs(track.length).format("mm:ss")}</td>
         </tr>
       `
     });
+
+    console.log(CURRENT_USER)
 
     tracklist.innerHTML = tracklist_update;
     sendEvent(playerEvent, {action: "loadAlbum", data: album});

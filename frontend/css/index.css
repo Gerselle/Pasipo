@@ -10,6 +10,7 @@
   --bg-200:#b19677;
   --bg-300:#e7d1bb;
   --filter: invert(8%) sepia(19%) saturate(2661%) hue-rotate(198deg) brightness(97%) contrast(94%);
+  --show: invert(67%) sepia(56%) saturate(629%) hue-rotate(1deg) brightness(91%) contrast(90%);
 }
 
 .dark{
@@ -24,6 +25,7 @@
   --bg-200:#252841;
   --bg-300:#3d3f5b;
   --filter: invert(64%) sepia(9%) saturate(314%) hue-rotate(244deg) brightness(94%) contrast(89%);
+  --show: invert(67%) sepia(56%) saturate(629%) hue-rotate(1deg) brightness(91%) contrast(90%);
 }
 
 :root{
