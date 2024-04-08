@@ -2,7 +2,7 @@
 let musicEvent;
 let player_interval;
 let service_player;
-let service_player_id;
+let player_active = false;
 
 // Keeps track of the album/tracklist that's loaded into the player
 let p_album;
@@ -21,7 +21,7 @@ document.addEventListener("player", async (event) => {
       sendEvent(musicEvent, {action: "start"});
     break;
     case "loadAlbum": loadAlbum(event.detail.data); break;
-    case "setTrack": setTrack(event.detail.data); break;
+    case "setTrack": if(playerLoaded()){ setTrack(event.detail.data); } break;
     case "disconnect": if(musicEvent){ sendEvent(musicEvent, {action: "disconnect"}) } break;
     default: break;
   }
@@ -32,17 +32,31 @@ window.onbeforeunload = function(){
   if(progress_interval){ clearInterval(progress_interval); }
 };
 
+function playerLoaded(){
+  let player_loaded = false;
+  if(!sessionGet("player_id")){
+    sendEvent(musicEvent, {action: "start"});
+  }else if(!player_active){
+    sendEvent(musicEvent, {action: "connect"});
+  }else{
+    player_loaded = true;
+  }
+  return player_loaded;
+}
+
 function playerUpdate(event){
   if(!CURRENT_USER || !CURRENT_USER.active_token){ return; }
   const target = event.target.closest('[id]');
-  switch(target){
-    case p_play: playTrack(); break;
-    case p_next: nextSong(); break;
-    case p_prev: prevSong(); break;
-    case p_scr_bar: setTime(event); break;
-    case p_title: setTime(event); break;
-    case p_volume: toggleVolume(); break;
-    default: break;
+
+  if(playerLoaded()){
+    switch(target){
+      case p_play: playTrack(); break;
+      case p_next: nextSong(); break;
+      case p_prev: prevSong(); break;
+      case p_scr_bar: setTime(event); break;
+      case p_title: setTime(event); break;
+      case p_volume: toggleVolume(); break;
+      }
   }
 }
 
@@ -53,7 +67,7 @@ function updatePlayer(state){
   // is playing to keep sync with the actual music service web player
   progress = {time_pos: state.time_pos, time_end: state.time_end };
   updateProgress();
-  if(progress_interval){ clearInterval(progress_interval); }
+  clearInterval(progress_interval);
   if(state.track_playing){
     progress_interval = setInterval(updateProgress, 1000);
   }
@@ -177,7 +191,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
     let player_number = 1;
     token.devices.forEach(device => {
       const device_name = device.name.replaceAll(/ [0-9]+/gi, "");
-      if(device_name === player_name){ player_number++; }
+      if((device_name === player_name)){ player_number++; }
      });
 
     service_player = new Spotify.Player({
@@ -186,9 +200,8 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
       volume: parseFloat(localGet("volume")) || 0.33
     });
 
-    service_player.addListener('ready', async ({ device_id }) => {
-      service_player_id = device_id;
-      fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/loadplayer/spotify/${device_id}`)
+    service_player.addListener('ready', ({ device_id }) => {
+      sessionSet("player_id", device_id);
     });
 
     service_player.addListener('player_state_changed', (state) => updateSpotifyPlayer(state));
@@ -240,22 +253,29 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
   musicEvent = new CustomEvent("spotify", {detail: {}});
 
   document.addEventListener("spotify", async (event) => {
-    switch(event.detail.action){
-      case "start": 
-        await loadSpotifyPlayer();
-        if(player_interval){ clearInterval(player_interval); }
-        player_interval = setInterval(loadSpotifyPlayer, 1000 * 60 * 59); // Reload player every 59 mins
-      break;
-      case "load": loadSpotifyTrack(event.detail.album_id, event.detail.track_pos); break;
-      case "play": service_player.togglePlay(); break;
-      case "next": service_player.nextTrack(); break;
-      case "prev": service_player.previousTrack(); break;
-      case "pause": service_player.pause(); break;
-      case "resume": service_player.resume(); break;
-      case "seek": service_player.seek(event.detail.seek); break;
-      case "volume": service_player.setVolume(event.detail.volume); break; 
-      case "update": service_player.getCurrentState().then((state) => updateSpotifyPlayer(state)); break;
-      case "disconnect": await service_player.disconnect(); break;
-    }
-  });
+      switch(event.detail.action){
+        case "start": 
+          await loadSpotifyPlayer();
+          if(player_interval){ clearInterval(player_interval); }
+          player_interval = setInterval(loadSpotifyPlayer, 1000 * 60 * 59); // Reload player every 59 mins
+        break;
+        case "load": loadSpotifyTrack(event.detail.album_id, event.detail.track_pos); break;
+        case "play": service_player.togglePlay(); break;
+        case "next": service_player.nextTrack(); break;
+        case "prev": service_player.previousTrack(); break;
+        case "pause": service_player.pause(); break;
+        case "resume": service_player.resume(); break;
+        case "seek": service_player.seek(event.detail.seek); break;
+        case "volume": service_player.setVolume(event.detail.volume); break;
+        case "update": service_player.getCurrentState().then((state) => updateSpotifyPlayer(state)); break;
+        case "connect" :
+          await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/loadplayer/spotify/${sessionGet("player_id")}`)
+                .then(()=>{
+                  player_active = true;
+                  displayMessage(player, "Player loading...", { offsetY: -75, delay: 1, duration: 0});
+                 });          
+        break;
+        case "disconnect": await service_player.disconnect(); player_active = false; break;
+      }
+    });
 }

@@ -33,14 +33,16 @@
   <div class="header">
     <div class="info">
       <div class="cover">
+          <button class="review" onclick="toggleNotes(this)">Edit Review</button>
           <a class="image" id="album_img"><img src="" alt=""></a>
           <div class="rating" id="album_rating"><div class="bg"></div><div class="add" id="rating_level"><div class="stars"></div></div></div>
-          <button class="review" onclick="toggleNotes(this)">Edit Review</button>
       </div>
       <div class="description">
-          <a class="ellipsis title" id="album_title"></a>
-          <div class="ellipsis subtitle" id="album_artists"></div>
-          <div class="ellipsis subtitle" id="album_genres"></div>
+          <div style="margin-bottom: 10px;">
+            <a class="ellipsis title" id="album_title"></a>
+            <div class="ellipsis subtitle" id="album_artists"></div>
+            <div class="ellipsis subtitle" id="album_genres"></div>
+          </div>
           <div class="note">This is a cool album.</div>
         </div>
     </div>

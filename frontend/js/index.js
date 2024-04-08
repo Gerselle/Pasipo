@@ -112,25 +112,34 @@ function throttle(func, timeout) {
   };
 }
 
-// Displays an error message box under the target element
-function displayError(target, message){
-  if(!docId("err_msg")){
+// Displays an message box on top of the element, with positional and animation options
+function displayMessage(target, message, options = {}){
+  if(!docId(message)){
     const element = target || document.body;
     element_pos = element.getBoundingClientRect();
-    const error_div = document.createElement("div");
-    Object.assign(error_div.style, {
-      left: `${element_pos.x + element_pos.width/2}px`,
-      top: `${element_pos.y + element_pos.height/2}px`,
+    const message_box = document.createElement("div");
+
+    const offsetX = options.offsetX || 0;
+    const offsetY = options.offsetY || 0;
+    const delay = options.delay || 3;
+    const duration = options.duration || 2;
+
+    Object.assign(message_box.style, {
+      left: `${element_pos.x + element_pos.width/2 + offsetX}px`,
+      top: `${element_pos.y + element_pos.height/2 + offsetY}px`,
     });
 
-    error_div.id = "err_msg";
-    error_div.className = "no-select error";
-    error_div.innerHTML = message
-    document.body.append(error_div);
-  
+    message_box.style.animationDelay = `${delay}s`;
+    message_box.style.animationDuration = `${duration}s`;
+    message_box.className = "no-select message";
+    message_box.innerHTML = message;
+    message_box.id = message;
+
+    document.body.append(message_box);
+
     setTimeout(() => {
-      err_msg.remove();
-    }, ERROR_LENGTH);
+      docId(message).remove();
+    }, delay * (duration + 1) * 1000);
   }
 }
 
@@ -158,44 +167,45 @@ function dbStart(){
 }
 
 function dbAccess(store, data, operation = null){
-  return new Promise((resolve, reject) => { 
+  return new Promise( async (resolve, reject) => { 
     if(!data){resolve(null)};
 
     if(operation){
-        const transaction = DATABASE_STORAGE.transaction([store], "readwrite");
-        transaction.onerror = (event) => {
-          resolve({error: `ObjectStore "${store}" ${operation} error:\n ${event.target.error}`});
-        };
-        
-        const objectStore = transaction.objectStore(store);
+      if(!DATABASE_STORAGE) { await dbStart(); }
+      const transaction = DATABASE_STORAGE.transaction([store], "readwrite");
+      transaction.onerror = (event) => {
+        resolve({error: `ObjectStore "${store}" ${operation} error:\n ${event.target.error}`});
+      };
+      
+      const objectStore = transaction.objectStore(store);
 
-          let request;
-          switch(operation){
-            case "get":
-              request = objectStore.get(data);
-              break;
-            case "add":
-              request = objectStore.add(data);
-              break;
-            case "update":
-              request = objectStore.put(data);
-              break;
-            case "delete":
-              request = objectStore.delete(data);
-              break;
-            case "clear":
-              request = objectStore.clear();
-              break;
-            case "getAll":
-              request = objectStore.getAll();
-              break;
-            default:
-              resolve({error: `ObjectStore "${store}" access with invalid operation.`});
-          }
+        let request;
+        switch(operation){
+          case "get":
+            request = objectStore.get(data);
+            break;
+          case "add":
+            request = objectStore.add(data);
+            break;
+          case "update":
+            request = objectStore.put(data);
+            break;
+          case "delete":
+            request = objectStore.delete(data);
+            break;
+          case "clear":
+            request = objectStore.clear();
+            break;
+          case "getAll":
+            request = objectStore.getAll();
+            break;
+          default:
+            resolve({error: `ObjectStore "${store}" access with invalid operation.`});
+        }
 
-          request.onsuccess = (event) =>{
-            resolve(event.target.result);
-          }
+        request.onsuccess = (event) =>{
+          resolve(event.target.result);
+        }
 
     }else{
       resolve({error: `ObjectStore "${store}" access with no operation.`});
@@ -223,7 +233,7 @@ async function requestAccess(event){
     const access_response = await response.json();
 
     if(access_response.error){
-      displayError(docId("focus"), access_response.error);
+      displayMessage(docId("focus"), access_response.error);
     }else{
       setFocus(false);
       if(!userLoggedIn()){ pushUser(); } // Local user logged into an account
@@ -264,7 +274,7 @@ async function oAuth(service, action){
    }).then(async (response) => {
       const redirect = await response.json();
       if(redirect.error){
-        displayError(docId("focus"), redirect.error);
+        displayMessage(docId("focus"), redirect.error);
       }else{
         window.location.href = redirect.url;
       }

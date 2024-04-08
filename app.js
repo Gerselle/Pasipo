@@ -278,7 +278,7 @@ app.get("/search/:query", async function(req, res){
       typesense.addAlbum(search_response, query);
       postgres.addAlbum(search_response);
     }else{
-      res.send({url: null});
+      res.send({error: "Query couldn't be found."});
     }
   }
 });

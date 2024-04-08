@@ -210,11 +210,14 @@
 }
 
 .album .cover button{
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   border-radius: 0;
-  height: fit-content;
-  padding: 5px;
+  height: 1.5em;
   font-size: 1.5em;
+  background-color: var(--bg-100);
 }
 
 .album .cover button:hover{
@@ -263,9 +266,9 @@
 
 .rating{
   display: grid;
-  width: 95%;
+  width: 100%;
+  padding: 5px;
   cursor: pointer;
-  margin: 5px;
 }
 
 .rating .bg{
@@ -331,38 +334,21 @@
   text-align: center;
 }
 
-.tracklist .icon{
+.tracklist .star{
   opacity: 0;
   width: 50px;
   background-color: black;
   mask-size: contain;
   filter: var(--filter);
-}
-
-.tracklist .icon.show{
-  opacity: 1;
-  filter: var(--show);
-}
-
-.tracklist .star{
   mask-image: url("/images/star.svg");
 }
 
-.tracklist .save{
-  mask-image: url("/images/save.svg");
-}
-
-.tracklist .save.show{
+.tracklist .starred{
   opacity: 1;
   filter: var(--show);
-  mask-image: url("/images/save.svg");
 }
 
 .tracklist tr:hover .star{
-  opacity: 1;
-}
-
-.tracklist tr:hover .save{
   opacity: 1;
 }
 

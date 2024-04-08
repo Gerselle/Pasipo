@@ -60,15 +60,13 @@
   overflow: hidden;
 }
 
-/* Default for error message box */
-.error{
+/* Default for the message box */
+.message{
   font-size: var(--default-font);
   display: flex;
   align-items: center;
   justify-items: center;
   padding: 10px;
-  width: fit-content;
-  height: 90%;
   max-height: 50px;
   background-color: var(--primary-200);
   color: var(--accent-100);
@@ -77,8 +75,7 @@
   transform: translate(-50%, -50%);
   border-radius: 15px;
   animation-name: fadeOut;
-  animation-duration: 2s;
-  animation-delay: 1s;
+  animation-fill-mode: forwards;
 }
 
 @keyframes fadeOut {

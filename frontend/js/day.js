@@ -33,30 +33,20 @@ docId("album_tracklist").addEventListener("click", async (event) => {
   if(!row){ return; }
 
   switch(event.target.getAttribute("action")){
-    case "save": saveTrack(row); break;
     case "star": starTrack(row); break;
     default: playTrack(row);
   }
 });
 
-function saveTrack(row){
-  if(!row){ return; }
-  const save = row.querySelector(`[action="save"]`);
-  if(!save){ return; }
-
-  save.classList.toggle("show");
-
-  console.log(save);
-}
-
 function starTrack(row){
   if(!row){ return; }
   const star = row.querySelector(`[action="star"]`);
-  if(!star){ return; }
+  const track = row.querySelector(`[class="title"]`);
+  if(!star || !track){ return; }
 
-  star.classList.toggle("show");
-
-  console.log(star);
+  star.classList.toggle("starred");
+  const track_name = track.innerHTML;
+  star.title = star.classList.contains("starred") ? `Unstar ${track_name}` :  `Star ${track_name}`; 
 }
 
 function playTrack(row){
@@ -76,7 +66,7 @@ function playTrack(row){
 
   const preview = SELECTED_ALBUM.track_list[track_index].preview;
   if(!preview){
-    displayError(row, "No preview audio available for album.");
+    displayMessage(row, "No preview audio available for album.");
     return;
   }
 
@@ -105,7 +95,7 @@ async function parseDayPath(){
             let viewed_response = await response.json();
             if(viewed_response.error){
               viewed_response = {user_name: "local", albums: {}, ratings: {}};
-              displayError(null, `User ${capitalize(path_user)} not found, redirecting...`);
+              displayMessage(null, `User ${capitalize(path_user)} not found, redirecting...`);
               setTimeout(() => {
                 window.location.pathname = `/local${today.format("/YYYY/M/D")}`
               }, ERROR_LENGTH);
@@ -435,7 +425,7 @@ async function searchAlbum(event = null) {
     dbAccess("albums", album, "add");
     SELECTED_ALBUM = album;
   }else{
-    displayError(docId("search"), "Error in finding album, please use another query term.");
+    displayMessage(docId("search"), album.error);
   }
 }
 
@@ -527,14 +517,11 @@ async function displayAlbum(album){
       ` <tr track_index=${track_index} track_id=${track.id}>
           <td class="num">${track_index + 1}</td>
           <td class="title">${track.name}</td>
-          <td class="no-select icon star" action="star" title="Star ${track.name} on Pasipo"></td>
-          <td class="no-select icon save" action="save" title="Save ${track.name} to ${capitalize(CURRENT_USER.active_token)}"></td>
+          <td class="no-select star" action="star" title="Star ${track.name}"></td>
           <td class="no-select num time">${dayjs(track.length).format("mm:ss")}</td>
         </tr>
       `
     });
-
-    console.log(CURRENT_USER)
 
     tracklist.innerHTML = tracklist_update;
     sendEvent(playerEvent, {action: "loadAlbum", data: album});
