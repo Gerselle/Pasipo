@@ -101,8 +101,8 @@ async function getViewedUser(viewed_user, current_user){
     const user_check = await query("SELECT * from users WHERE user_name = $1", [viewed_user]);
     if(user_check.rows.length != 0){
         const found_user = user_check.rows[0];
-        const found_albums = await pullUserAlbums(found_user);
-        const found_ratings = await pullUserRatings(found_user);
+        const found_albums = await pullUserAlbums(found_user) || [];
+        const found_ratings = await pullUserRatings(found_user) || [];
         const viewed_albums = {};
         const viewed_ratings = {};
 
@@ -179,26 +179,23 @@ async function deleteUserAlbum(user, data){
 
 // User rating info
 async function updateUserRating(user, data){
-    if(!data.rating){ return {error: "No rating provided for user rating update."}; }
     if(!data.id){ return {error: "No album provided for user rating update."}; }
+    const position = data.position || 0;
+    const ratings_query = await query("SELECT * FROM ratings WHERE user_id=$1 AND album_id=$2", [user.user_id, data.id]);
+    const ratings = ratings_query.rows[0] || null;
+    const rating = ratings ? ratings.rating : [];
 
-    old_rating = await query("SELECT * FROM ratings WHERE user_id=$1 AND album_id=$2", [user.user_id, data.id]);
-    // album_rating = await query("SELECT rating_sum, rating_amount FROM albums WHERE id=$1", [data.id]);
-    // console.log(album_rating);
-    if(old_rating){
-        rating_change = old_rating[0] - data.rating[0];
-        // if(rating_change == 0) { return; } 
-        // if(rating_change > 0){
-
-        // }else if(rating_change < 0){
-
-        // }
-        query("DELETE FROM ratings WHERE user_id=$1 AND album_id=$2", [user.user_id, data.id]);
-    }{
-        album_rating = await query("SELECT ")
+    // This will eventually update the rating of the album among all users.
+    if(position == 0){
+        rating_change = rating[position] ? rating[position] - data.rating : null;
     }
-    query(`INSERT INTO ratings(user_id, album_id, rating) VALUES ($1, $2, $3) ON CONFLICT(user_id, album_id) 
-           DO UPDATE SET rating = EXCLUDED.rating;`, [user.user_id, data.id, data.rating]);
+
+    rating[position] = data.rating;
+
+    query(`INSERT INTO ratings(user_id, album_id, rating) VALUES ($1, $2, $3)
+            ON CONFLICT (user_id, album_id)
+            DO UPDATE SET rating = EXCLUDED.rating`,
+            [user.user_id, data.id, rating]);
 
     return {success: "Rating updated successfully."};
 }

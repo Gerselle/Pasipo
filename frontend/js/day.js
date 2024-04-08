@@ -3,7 +3,7 @@ let PLAYING_ROW;
 let SELECTED_ALBUM;
 let SELECTED_DATE;
 let CALENDAR_DATE;
-let PRESEARCH = {};
+let CURRENT_RATING;
 
 async function start(){
   await dayListeners();
@@ -46,7 +46,15 @@ function starTrack(row){
 
   star.classList.toggle("starred");
   const track_name = track.innerHTML;
-  star.title = star.classList.contains("starred") ? `Unstar ${track_name}` :  `Star ${track_name}`; 
+  const rating_position = parseInt(row.getAttribute("track_index")) + 1; 
+  
+  if(star.classList.contains("starred")){
+    star.title = `Unstar ${track_name}`;
+    updateRating(1, rating_position);
+  }else{
+    star.title = `Star ${track_name}`;
+    updateRating(0, rating_position);
+  }
 }
 
 function playTrack(row){
@@ -128,7 +136,7 @@ docId("album_rating").addEventListener("mousemove", mouseRating);
 docId("album_rating").addEventListener("mouseout", mouseRating);
 docId("album_rating").addEventListener("mouseover", mouseRating);
 docId("album_rating").addEventListener("click", mouseRating);
-let CURRENT_RATING;
+
 function mouseRating(event){
   if(!VIEWED_USER.is_current_user){ return; }
 
@@ -146,13 +154,18 @@ function mouseRating(event){
     case "click":
       let new_rating = Math.round((event.offsetX/event.target.offsetWidth) * 10) * 10;
       CURRENT_RATING = `${new_rating}%`;
-      updateRating([new_rating/10]);
+      updateRating(new_rating/10, 0);
     break;
   }
 }
 
-async function updateRating(rating){
-  const album = await albumOfDate(SELECTED_DATE);
+async function updateRating(rating, position = 0){
+  if(!SELECTED_ALBUM){ return; }
+  const ratings = await dbAccess("user_ratings", SELECTED_ALBUM.id, "get") || null;
+  const new_rating = ratings ? ratings.rating : [];
+  new_rating[position] = rating;
+  dbAccess("user_ratings", {id: SELECTED_ALBUM.id, rating: new_rating}, "update");
+
   fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
@@ -160,12 +173,12 @@ async function updateRating(rating){
       field: "rating",
       action: "update",
       data: {
-        id: album.id,
-        rating: [parseInt(rating)]
+        id: SELECTED_ALBUM.id,
+        rating: parseInt(rating),
+        position: position
       }
       })
     })
-  dbAccess("user_ratings", {id:album.id, rating: rating}, "update");
 }
 
 async function albumOfDate(date){
@@ -185,6 +198,9 @@ async function getAlbum(album_id, db_checked = false){
   async function fetchAlbum(album_id){
     const response = await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/album/${album_id}`);
     const album = await response.json();
+    if(!album.error){
+      await dbAccess("albums", album, "add");
+     }
     return album.error ? null : album;
   }
 }
@@ -407,15 +423,15 @@ async function searchAlbum(event = null) {
   search_results.innerHTML = ""; // Clear search suggestions
   let album;
 
+  if(!VIEWED_USER.is_current_user){
+    window.location.pathname = `${CURRENT_USER.user_name}/${dayjs(SELECTED_DATE).format("YYYY/M/D")}`;
+  }
+
   if(event && event.target.nodeName === "LI"){
     album = PRESEARCH.albums[event.target.getAttribute("album_id")];
   }else{
     await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/search/${album_query.value}`)
           .then(async (response) => album = await response.json());
-  }
-
-  if(!VIEWED_USER.is_current_user){
-    window.location.pathname = `${CURRENT_USER.user_name}/${dayjs(SELECTED_DATE).format("YYYY/M/D")}`;
   }
 
   if(!album.error){
@@ -468,13 +484,11 @@ async function updateAlbum(set_album = null){
     SELECTED_ALBUM = album;
   }
 
-  album_rating.style.width = rating ? `${rating[0] * 10}%` : "0%";
   window.history.pushState({}, "", `/${VIEWED_USER.user_name}${dayjs(SELECTED_DATE).format("/YYYY/M/D")}`);
-
-  displayAlbum(album);
+  displayAlbum(album, rating);
 }
 
-async function displayAlbum(album){
+async function displayAlbum(album, rating){
   if(album){
     const album_img = docId("album_img");
     const album_artists = docId("album_artists");
@@ -489,11 +503,12 @@ async function displayAlbum(album){
 
     album.artists.forEach((artist, index) => {
       const comma = index == album.artists.length - 1 ? "" : ","; 
-      artists += ` <a href="${artist.url}">${artist.name}${comma}</a>`;
+      artists += ` <a "href="${artist.url}">${artist.name}${comma}</a>`;
     });
     album_artists.innerHTML = artists;
   
     album_title.innerHTML = album.name;
+    album_title.title = album.name;
     album_title.href = album.url;
 
     let genres = capitalize(album.genres[0]) || "No genres";
@@ -501,7 +516,9 @@ async function displayAlbum(album){
       if(album.genres[i]){
         genres += `, ${capitalize(album.genres[i])}`;
       }
-    } 
+    }
+
+    docId("rating_level").style.width = rating ? `${rating[0] * 10}%` : "0%";
   
     album_genres.innerHTML = genres;
   
@@ -512,12 +529,17 @@ async function displayAlbum(album){
 
     album.track_list.forEach(track => {
       const track_index = album.track_list.indexOf(track);
+      let track_star = `<td class="no-select star" action="star" title="Star ${track.name}"></td>`;
+
+      if(rating && rating[track_index + 1]){
+        track_star = `<td class="no-select star starred" action="star" title="Unstar ${track.name}"></td>`
+      }
 
       tracklist_update += 
       ` <tr track_index=${track_index} track_id=${track.id}>
           <td class="num">${track_index + 1}</td>
           <td class="title">${track.name}</td>
-          <td class="no-select star" action="star" title="Star ${track.name}"></td>
+          ${track_star}
           <td class="no-select num time">${dayjs(track.length).format("mm:ss")}</td>
         </tr>
       `

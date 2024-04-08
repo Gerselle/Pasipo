@@ -2,6 +2,7 @@ let DATABASE_STORAGE;
 let CURRENT_USER;
 const WEBSITE_AUDIO = new Audio();
 const ERROR_LENGTH = 3000;
+const PRESEARCH = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
   toggleDarkMode(localStorage.getItem("color_mode"));
@@ -13,7 +14,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Current user will always either be the session's user or a local user.
 async function updateCurrentUser(){
   await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/check`)
-        .then( async (response) => { CURRENT_USER = await response.json(); })
+        .then( async (response) => { 
+          CURRENT_USER = await response.json();
+          if(CURRENT_USER.user_id){ 
+            await pushUser();
+            await pullUser();
+           }
+        })
         .catch(() => { CURRENT_USER = {user_id: null, user_name: "local"}; });
 }
 
@@ -166,50 +173,46 @@ function dbStart(){
   });
 }
 
-function dbAccess(store, data, operation = null){
-  return new Promise( async (resolve, reject) => { 
-    if(!data){resolve(null)};
+async function dbAccess(store, data, operation){
+  if(!DATABASE_STORAGE) { await dbStart(); }
 
-    if(operation){
-      if(!DATABASE_STORAGE) { await dbStart(); }
-      const transaction = DATABASE_STORAGE.transaction([store], "readwrite");
-      transaction.onerror = (event) => {
-        resolve({error: `ObjectStore "${store}" ${operation} error:\n ${event.target.error}`});
-      };
-      
-      const objectStore = transaction.objectStore(store);
+  return new Promise( (resolve, reject) => { 
+    if(!operation){ resolve({error: `ObjectStore "${store}" access with no operation.`}); }
 
-        let request;
-        switch(operation){
-          case "get":
-            request = objectStore.get(data);
-            break;
-          case "add":
-            request = objectStore.add(data);
-            break;
-          case "update":
-            request = objectStore.put(data);
-            break;
-          case "delete":
-            request = objectStore.delete(data);
-            break;
-          case "clear":
-            request = objectStore.clear();
-            break;
-          case "getAll":
-            request = objectStore.getAll();
-            break;
-          default:
-            resolve({error: `ObjectStore "${store}" access with invalid operation.`});
-        }
+    const transaction = DATABASE_STORAGE.transaction([store], "readwrite");
+    transaction.onerror = (event) => {
+      resolve({error: `ObjectStore "${store}" ${operation} error:\n ${event.target.error}`});
+    };
+    
+    const objectStore = transaction.objectStore(store);
+    let request;
 
-        request.onsuccess = (event) =>{
-          resolve(event.target.result);
-        }
-
-    }else{
-      resolve({error: `ObjectStore "${store}" access with no operation.`});
+    switch(operation){
+      case "get":
+        request = objectStore.get(data);
+        break;
+      case "add":
+        request = objectStore.add(data);
+        break;
+      case "update":
+        request = objectStore.put(data);
+        break;
+      case "delete":
+        request = objectStore.delete(data);
+        break;
+      case "clear":
+        request = objectStore.clear();
+        break;
+      case "getAll":
+        request = objectStore.getAll();
+        break;
+      default:
+        resolve({error: `ObjectStore "${store}" access with invalid operation.`});
     }
+
+    request.onsuccess = (event) =>{ resolve(event.target.result); }
+
+    request.onerror = (event) => { resolve(null); }
   });
 }
 
@@ -233,10 +236,10 @@ async function requestAccess(event){
     const access_response = await response.json();
 
     if(access_response.error){
-      displayMessage(docId("focus"), access_response.error);
+      displayMessage(docId("access"), access_response.error);
     }else{
       setFocus(false);
-      if(!userLoggedIn()){ pushUser(); } // Local user logged into an account
+      if(!userLoggedIn()){ pushUser(); }
       CURRENT_USER = access_response;
       pullUser();
       updateLayout();
@@ -327,7 +330,7 @@ async function pullUser(){
 
 async function pushUser(){
   if(userLoggedIn()){
-    const user_albums =  await dbAccess("user_albums", null, "getAll");
+    const user_albums = await dbAccess("user_albums", null, "getAll");
 
     fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
     'method': "POST",
