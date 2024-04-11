@@ -37,6 +37,10 @@ async function updateLayout(){
   player.style.display = CURRENT_USER.active_token ? "flex" : "none";
 }
 
+async function refresh(){
+  window.location.pathname = window.location.pathname;
+}
+
 function setFocus(show_focus, focus_child){
   const focus = docId("focus");
   const layout = docId("layout");
@@ -132,8 +136,8 @@ function displayMessage(target, message, options = {}){
     const duration = options.duration || 2;
 
     Object.assign(message_box.style, {
-      left: `${element_pos.x + element_pos.width/2 + offsetX}px`,
-      top: `${element_pos.y + element_pos.height/2 + offsetY}px`,
+      left: `${element_pos.x + element_pos.width/2 - offsetX}px`,
+      top: `${element_pos.y + element_pos.height/2 - offsetY}px`,
     });
 
     message_box.style.animationDelay = `${delay}s`;
@@ -146,7 +150,7 @@ function displayMessage(target, message, options = {}){
 
     setTimeout(() => {
       docId(message).remove();
-    }, delay * (duration + 1) * 1000);
+    }, (delay + duration) * 1000);
   }
 }
 
@@ -174,6 +178,7 @@ function dbStart(){
 }
 
 async function dbAccess(store, data, operation){
+  if(!data && !["clear", "getAll"].includes(operation)){ return; }
   if(!DATABASE_STORAGE) { await dbStart(); }
 
   return new Promise( (resolve, reject) => { 
@@ -217,14 +222,18 @@ async function dbAccess(store, data, operation){
 }
 
 // User login/logout functions
-async function requestAccess(event){
+async function requestAccess(access_value){
+  console.log(access_value)
+  const username_element = docId("user_name");
+  const password_element = docId("pass_word");
+  
   access_request = {
-    "value": event.value,
-    "user_name": docId("user_name").value,
-    "pass_word": docId("pass_word").value
+    "value": access_value,
+    "user_name": username_element.value,
+    "pass_word": password_element.value
   }
 
-  if(event.value === "signup"){
+  if(access_value === "signup"){
     access_request["pass_confirm"] = docId("pass_confirm").value;
   } 
   
@@ -236,7 +245,18 @@ async function requestAccess(event){
     const access_response = await response.json();
 
     if(access_response.error){
-      displayMessage(docId("access"), access_response.error);
+      let target_element = docId("access");
+      let offsetY = 0;
+      
+      if(access_response.error_type == "user"){
+        target_element = username_element;
+        offsetY = username_element.offsetHeight;
+      }else if (access_response.error_type == "password"){
+        target_element = password_element;
+        offsetY = password_element.offsetHeight;
+      }
+      
+      displayMessage(target_element, access_response.error, {delay: 1, duration: 0.5, offsetY : -offsetY});
     }else{
       setFocus(false);
       if(!userLoggedIn()){ pushUser(); }
@@ -257,7 +277,7 @@ async function authorize(){
         sendEvent(playerEvent, {action: "disconnect"});
         CURRENT_USER = local;
         clearUser();
-        updateLayout();
+        refresh();
       });
   }else{ // Open login/signup panel
     toggleAccess();
@@ -265,7 +285,6 @@ async function authorize(){
 }
 
 async function oAuth(service, action){
-
   fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },

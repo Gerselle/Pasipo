@@ -1,8 +1,11 @@
 <div class="no-select options" id="options">
-  <div class="date"> 
-    <img style="transform:rotate(180deg);" src="/images/arrow.svg" onclick="moveDate(false)">
-    <div id="date" style="cursor: pointer;" onclick="toggleCalendar()"></div>
-    <img src="/images/arrow.svg" onclick="moveDate(true)">
+  <div class="navigation">    
+    <button onclick="moveDate(false)"> <img style="transform:rotate(180deg);" src="/images/arrow.svg"> </button>
+    <div class="date">
+      <button id="date" onclick="toggleCalendar()"></button>
+      <button id="album_delete" onclick="sendAlbumDelete()">Delete Album</button>
+    </div>
+    <button onclick="moveDate(true)"> <img src="/images/arrow.svg"> </button>
   </div>
 
   <div class="calendar" id="calendar" style="display: none;">
@@ -20,17 +23,15 @@
   </div>
     <div class="dates" id="calendar_dates">
   </div></div>
-  
-  <div class="current-album" id="current_album"></div>
-  <div class="select" id="select" style="display: none;">
-    <button type="button" onclick="sendAlbumUpdate()" id="album_update"> Update </button>
-    <button type="button" onclick="updateAlbum()"> Reset </button>
-    <button type="button" onclick="sendAlbumDelete()"> Delete </button>
-  </div>
 </div>
 
 <div class="album" id="album" style="display: none;">
   <div class="header">
+    <div class="select" id="select" style="display: none;">
+      <button type="button" onclick="sendAlbumUpdate()" id="album_update"> Update </button>
+      <div class="current-album" id="current_album"></div>
+      <button type="button" onclick="updateAlbum()"> Reset </button>
+    </div>
     <div class="info">
       <div class="cover">
           <button class="review" onclick="toggleNotes(this)">Edit Review</button>

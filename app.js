@@ -152,7 +152,7 @@ app.post("/action", async function(req, res){
           res.send({error: "No valid rating action provided."});
       }
       break;
-
+    
     default:
       res.send({error: "No update field provided."});
   }
@@ -247,7 +247,7 @@ app.post("/access", async function(req, res) {
   }
 
   if(response.error){
-    res.status(403).send(response);
+    res.send(response);
   }else{
     req.session.user = response;
     res.send(await sessionUser(req.session));

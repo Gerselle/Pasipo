@@ -39,7 +39,7 @@ docId("album_tracklist").addEventListener("click", async (event) => {
 });
 
 function starTrack(row){
-  if(!row){ return; }
+  if(!row || !VIEWED_USER.is_current_user){ return; }
   const star = row.querySelector(`[action="star"]`);
   const track = row.querySelector(`[class="title"]`);
   if(!star || !track){ return; }
@@ -388,7 +388,7 @@ const debouncedSearch = debounce(async () => presearchAlbum(), 200);
 async function searchInput(event){
   if(event.key == "Enter"){
     searchAlbum();
-  }else if(album_query.value.length > 2){
+  }else if(album_query.value.length){
     debouncedSearch();
   }else{
     search_results.innerHTML = "";
@@ -456,8 +456,8 @@ async function updateAlbum(set_album = null){
 
   const date = docId("date");
   date.innerHTML = SELECTED_DATE;
+  docId("album_delete").style.display = "none";
 
-  const album_rating = docId("rating_level");
   let album;
   let rating;
 
@@ -469,10 +469,12 @@ async function updateAlbum(set_album = null){
     if(current_album){
       const albums_differ = current_album.id !== album.id;      
       current_album_info.innerHTML = albums_differ ? `<span>Current Album: <i>${current_album.name}</i> by <b>${current_album.artists[0].name}</b></span>` : "";
+      current_album_info.title = albums_differ ? `${current_album.name} by ${current_album.artists[0].name}` : "";
       current_album_info.style.display = albums_differ ? "flex" : "none";
       options_panel.style.display = albums_differ ? "flex" : "none"; 
     }
 
+    docId("album_delete").style.display = album ? "flex" : "none";
     user_rating = album ? await dbAccess("user_ratings", album.id, "get") : null;
     rating = user_rating ? user_rating.rating : null;
   }else{
@@ -496,15 +498,13 @@ async function displayAlbum(album, rating){
     const album_genres = docId("album_genres");
   
     album_img.href = album.url;
-    album_img.innerHTML = `
-      \n<img src="${album.image}" alt="${album.name}">`;
+    album_img.innerHTML = `<img src="${album.image}" alt="${album.name}">`;
     
-    let artists = "";
-
-    album.artists.forEach((artist, index) => {
-      const comma = index == album.artists.length - 1 ? "" : ","; 
-      artists += ` <a "href="${artist.url}">${artist.name}${comma}</a>`;
-    });
+    let artists = album.artists ? `<a "href="${album.artists[0].url}">${album.artists[0].name}</a>` : "";
+    
+    for(let i = 1; i < album.artists.length; i++){
+      artists += `, <a "href="${album.artists[i].url}">${album.artists[i].name}</a>`;
+    }
     album_artists.innerHTML = artists;
   
     album_title.innerHTML = album.name;
@@ -529,16 +529,26 @@ async function displayAlbum(album, rating){
 
     album.track_list.forEach(track => {
       const track_index = album.track_list.indexOf(track);
-      let track_star = `<td class="no-select star" action="star" title="Star ${track.name}"></td>`;
+      let track_star;
 
-      if(rating && rating[track_index + 1]){
-        track_star = `<td class="no-select star starred" action="star" title="Unstar ${track.name}"></td>`
+      if(VIEWED_USER.is_current_user){
+        if(rating && rating[track_index + 1]){
+          track_star = `<td class="no-select star starred" action="star" title="Unstar ${track.name}"></td>`;
+        }else{
+          track_star = `<td class="no-select star" action="star" title="Star ${track.name}"></td>`;
+        }
+      }else{
+        if(rating && rating[track_index + 1]){
+          track_star = `<td class="no-select star starred" title="${VIEWED_USER.user_name} starred ${track.name}"></td>`;
+        }else{
+          track_star = `<td class="no-select star" title="Login to star ${track.name}"></td>`;
+        }
       }
 
       tracklist_update += 
       ` <tr track_index=${track_index} track_id=${track.id}>
           <td class="num">${track_index + 1}</td>
-          <td class="title">${track.name}</td>
+          <td class="title" title="${track.name}">${track.name}</td>
           ${track_star}
           <td class="no-select num time">${dayjs(track.length).format("mm:ss")}</td>
         </tr>

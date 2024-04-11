@@ -167,6 +167,7 @@ async function addUserAlbum(user, data){
 async function updateUserAlbum(user, data){
     if(!data.date){ return {error: "No date provided for user album update."}; }
     if(!data.id){ return {error: "No album provided for user album update."}; }
+    if(!data.notes) { return {error: "No notes provided for user album update."}; }
     deleteUserAlbum(user, data);
     return addUserAlbum(user, data);
 }
@@ -225,7 +226,7 @@ async function hashPassword(pass_word, salt, length){
 async function signup(user_name, pass_word, pass_confirm){
     user_name = user_name.toLowerCase();
     if(pass_word !== pass_confirm){
-        return {error: "Passwords do not match, please try again."}
+        return {error: "Passwords do not match.", error_type:"password"}
     }
     
     const salt = crypto.randomBytes(16);
@@ -236,7 +237,7 @@ async function signup(user_name, pass_word, pass_confirm){
                         [user_name, hashed_pass_word, salt, user_name, {}]);
 
     if(signup.error){
-        return {error: `Username is already taken, please enter another.`}
+        return {error: `Username is already taken.`, error_type:"user"}
     }
 
     return await login(user_name, pass_word);
@@ -245,7 +246,7 @@ async function signup(user_name, pass_word, pass_confirm){
 async function login(user_name, pass_word){ 
     user_name = user_name.toLowerCase();
     const users = await query("SELECT * FROM users WHERE user_name = $1", [user_name]);
-    if(!users.rows || !users.rows[0]) { return {error: `User ${user_name} not found.`} };
+    if(!users.rows || !users.rows[0]) { return {error: `User ${user_name} not found.`, error_type:"user"} };
 
     const user = users.rows[0];
 
@@ -253,14 +254,13 @@ async function login(user_name, pass_word){
     if(crypto.timingSafeEqual(hashed_pass_word, user.hashed_pass_word)){
         return user;
     }else{
-        return {error: `Password is incorrect, please try again.`};
+        return {error: `Incorrect password.`, error_type:"password"};
     }
-
 }
 
 async function refreshUser(user_id){
     const user = await query("SELECT * FROM users WHERE user_id=$1", [user_id]); 
-    return user.rows.length > 0 ? user.rows[0] : {error: `User doesn't exist.`};
+    return user.rows.length > 0 ? user.rows[0] : {error: `User does not exist.`, error_type:"user"};
 }
 
 async function userWithServiceExists(service, service_id){

@@ -75,12 +75,16 @@ function updatePlayer(state){
   // Update the player's title based on if the user is looking at the album that the 
   // playing track is from. Also update the content's DOM if needed.
   const p_track = p_track_list[state.track_id];
+  let p_title_update;
   if(p_track){
-    p_title.innerHTML = `Disc ${p_track.disc} | Track ${p_track.number} | ${p_track.name} | ${state.album_name}`;
+    p_title_update = `Disc ${p_track.disc} | Track ${p_track.number} | ${p_track.name} | ${state.album_name}`;
     sendEvent(updateJS, {script: "player", track_id: state.track_id});
   }else{
-    p_title.innerHTML = `Remotely playing: ${state.track_name} by ${state.artist_name} | ${state.album_name}`;
+    p_title_update = `Remotely playing: ${state.track_name} by ${state.artist_name} | ${state.album_name}`;
   }
+
+  p_title.innerHTML = p_title_update;
+  p_title.title = p_title_update;
 
   // Play button image update
   const play_img = p_play.children[0];
@@ -253,6 +257,8 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
   musicEvent = new CustomEvent("spotify", {detail: {}});
 
   document.addEventListener("spotify", async (event) => {
+      if(event.detail.action != "start" && !service_player){ return; }
+
       switch(event.detail.action){
         case "start": 
           await loadSpotifyPlayer();
@@ -272,7 +278,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
           await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/loadplayer/spotify/${sessionGet("player_id")}`)
                 .then(()=>{
                   player_active = true;
-                  displayMessage(player, "Player loading...", { offsetY: -75, delay: 1, duration: 0});
+                  displayMessage(player, "Player loading...", { offsetY: 75, delay: 1, duration: 0 });
                  });          
         break;
         case "disconnect": await service_player.disconnect(); player_active = false; break;
