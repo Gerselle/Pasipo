@@ -123,6 +123,46 @@ function throttle(func, timeout) {
   };
 }
 
+let hold_interval;
+
+function holdElement(element, delay_secs, func, options = {}){
+  if(!element || !func ){ return; }
+  let hold_interval = null;
+  let progress = 0;
+  const old_background = element.style.backgroundColor;
+  const old_text = element.style.color;
+  const background_color = options.background_color|| "red";
+  const progress_color = options.progress_color || "darkred";
+  element.style.color = options.text_color || "black";
+
+
+  element.addEventListener("mouseup", () => {
+    element.style.background = old_background;
+    element.style.color = old_text;
+    clearInterval(hold_interval);
+    console.log("Released early!");
+  }, { once: true });
+
+  hold_interval = setInterval(() => {
+    progress++;
+    if(progress < 100){
+    element.style.background = 
+    `linear-gradient(
+      to right,
+      ${progress_color} 0%,
+      ${progress_color} ${progress}%,
+      ${background_color} ${progress}%,
+      ${background_color} 100%
+    )`
+    }else{
+      element.style.background = old_background;
+      element.style.color = old_text;
+      clearInterval(hold_interval);
+      func();
+    }
+  }, delay_secs * 10);
+}
+
 // Displays an message box on top of the element, with positional and animation options
 function displayMessage(target, message, options = {}){
   if(!docId(message)){

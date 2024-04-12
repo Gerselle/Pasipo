@@ -3,7 +3,7 @@
     <button onclick="moveDate(false)"> <img style="transform:rotate(180deg);" src="/images/arrow.svg"> </button>
     <div class="date">
       <button id="date" onclick="toggleCalendar()"></button>
-      <button id="album_delete" onclick="sendAlbumDelete()">Delete Album</button>
+      <button id="album_delete" onmousedown="sendAlbumDelete(this)">Delete Album</button>
     </div>
     <button onclick="moveDate(true)"> <img src="/images/arrow.svg"> </button>
   </div>
@@ -22,7 +22,8 @@
       <button type="button" class="close" onclick="toggleCalendar()"><img src="/images/close.svg"></button>
   </div>
     <div class="dates" id="calendar_dates">
-  </div></div>
+  </div>
+  </div>
 </div>
 
 <div class="album" id="album" style="display: none;">

@@ -4,6 +4,7 @@ let SELECTED_ALBUM;
 let SELECTED_DATE;
 let CALENDAR_DATE;
 let CURRENT_RATING;
+let ENTER_PRESSED;
 
 async function start(){
   await dayListeners();
@@ -211,9 +212,8 @@ async function moveDate(increment){
   
     new_date = increment ? new_date.add(1, 'day') : new_date.subtract(1, 'day');
   
-    date.innerHTML = new_date.format("MMM DD, YYYY");
-    SELECTED_DATE = date.innerHTML;
-
+    SELECTED_DATE = new_date.format("MMM DD, YYYY");
+    date.innerHTML = SELECTED_DATE;
     SELECTED_ALBUM = await albumOfDate(SELECTED_DATE);
 
     updateAlbum();
@@ -227,7 +227,6 @@ function moveMonth(increment){
 }
 
 async function setDate(date){
-  // Require user to select a new album for each date
   SELECTED_ALBUM = await albumOfDate(date);
   SELECTED_DATE = date;
   updateAlbum();
@@ -279,25 +278,24 @@ async function updateCalendar(){
     calendar_element.appendChild(dayChild(calendar[i]));
   }
 
-  function dayChild(day_children){
+  function dayChild(day_info){
     let day = document.createElement("div");
     day.className = "day";
-    if(day_children){
-      day.setAttribute("date", day_children.date);
-      day.className = day.className + " clickable"
-      if(day_children.selected){
-        day.className = day.className + " focused";
-      }
+    if(day_info){
+      day.setAttribute("date", day_info.date);
+      day.classList.add("clickable");
+      if(day_info.selected){ day.classList.add("focused"); }
 
       const num = document.createElement("div");
-      num.setAttribute("class", "num");
-      num.innerHTML = day_children.num;
+      num.className = "num";
+      num.innerHTML = day_info.num;
   
       day.appendChild(num);
-      if(day_children.name != null){
+
+      if(day_info.name != null){
         const img = document.createElement("img");
-        img.setAttribute("src", day_children.image);
-        img.setAttribute("alt", day_children.name);
+        img.src = day_info.image;
+        img.alt = day_info.name;
         day.appendChild(img);
       }
     }    
@@ -357,23 +355,25 @@ async function sendAlbumUpdate(){
   updateAlbum(SELECTED_ALBUM);
 }
 
-async function sendAlbumDelete(){
-  if(userLoggedIn()){
-    fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
-    'method': "POST",
-    'headers': { "Content-Type": "application/json" },
-    'body': JSON.stringify({
-      field: "album",
-      action: "delete",
-      data: {
-        date:  dayjs(SELECTED_DATE)
-      }
-    })
-    })
-  }
-
-  dbAccess("user_albums", SELECTED_DATE, "delete");
-  updateAlbum();
+async function sendAlbumDelete(album_delete){
+  holdElement(album_delete, 1, function(){
+    if(userLoggedIn()){
+      fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
+      'method': "POST",
+      'headers': { "Content-Type": "application/json" },
+      'body': JSON.stringify({
+          field: "album",
+          action: "delete",
+          data: {
+            date:  dayjs(SELECTED_DATE)
+          }
+        })
+      })
+    }
+  
+    dbAccess("user_albums", SELECTED_DATE, "delete");
+    updateAlbum();
+  });
 }
 
 // Search html
@@ -388,6 +388,7 @@ const debouncedSearch = debounce(async () => presearchAlbum(), 200);
 async function searchInput(event){
   if(event.key == "Enter"){
     searchAlbum();
+    ENTER_PRESSED = true;
   }else if(album_query.value.length){
     debouncedSearch();
   }else{
@@ -396,6 +397,11 @@ async function searchInput(event){
 }
 
 async function presearchAlbum(){
+  if(ENTER_PRESSED){
+    ENTER_PRESSED = false;
+    return;
+  }
+
   const query = {
     'q'         : album_query.value,
     'query_by'  : 'name,artists.name,track_list.name,aliases',
@@ -423,10 +429,6 @@ async function searchAlbum(event = null) {
   search_results.innerHTML = ""; // Clear search suggestions
   let album;
 
-  if(!VIEWED_USER.is_current_user){
-    window.location.pathname = `${CURRENT_USER.user_name}/${dayjs(SELECTED_DATE).format("YYYY/M/D")}`;
-  }
-
   if(event && event.target.nodeName === "LI"){
     album = PRESEARCH.albums[event.target.getAttribute("album_id")];
   }else{
@@ -442,6 +444,10 @@ async function searchAlbum(event = null) {
     SELECTED_ALBUM = album;
   }else{
     displayMessage(docId("search"), album.error);
+  }
+
+  if(!VIEWED_USER.is_current_user){
+    window.location.pathname = `${CURRENT_USER.user_name}/${dayjs(SELECTED_DATE).format("YYYY/M/D")}`;
   }
 }
 
