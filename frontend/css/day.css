@@ -12,15 +12,16 @@
   padding: 10px;
   background-color: var(--bg-200);
   border-radius: 10px;
+  font-size: 1em;
 }
 
 .navigation{
   display: flex;
   height: 50px;
-  width: 100%;
+  width: 90%;
   align-items: center;
-  justify-content: space-around;
-  font-size: x-large;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .navigation img{
@@ -32,10 +33,9 @@
 .navigation .date{
   display: flex;
   align-items: center;
+  justify-content: center;
   height: 100%;
-  width: 400px;
-  justify-content: space-evenly;
-  border-radius: 10px;
+  gap: 10px;
 }
 
 .calendar{
@@ -377,5 +377,11 @@
 @media (max-aspect-ratio: 1) {
   .album .cover{
     width: 15%;
+  }
+}
+
+@media (max-width: 500px) {
+  .navigation .date{
+    min-width: 250px;
   }
 }

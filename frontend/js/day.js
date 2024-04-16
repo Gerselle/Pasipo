@@ -356,7 +356,7 @@ async function sendAlbumUpdate(){
 }
 
 async function sendAlbumDelete(album_delete){
-  holdElement(album_delete, 1, function(){
+  holdElement(album_delete, function(){
     if(userLoggedIn()){
       fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
       'method': "POST",
@@ -426,7 +426,6 @@ async function presearchAlbum(){
 }
 
 async function searchAlbum(event = null) {
-  search_results.innerHTML = ""; // Clear search suggestions
   let album;
 
   if(event && event.target.nodeName === "LI"){
@@ -436,6 +435,10 @@ async function searchAlbum(event = null) {
           .then(async (response) => album = await response.json());
   }
 
+  // Clear search bar
+  search_results.innerHTML = "";
+  album_query.value = ""; 
+  
   if(!album.error){
     updateAlbum(album);
     await addAlbum(album);

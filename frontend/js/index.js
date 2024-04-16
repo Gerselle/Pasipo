@@ -16,7 +16,7 @@ async function updateCurrentUser(){
   await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/check`)
         .then( async (response) => { 
           CURRENT_USER = await response.json();
-          if(CURRENT_USER.user_id){ 
+          if(CURRENT_USER.user_id){
             await pushUser();
             await pullUser();
            }
@@ -125,42 +125,43 @@ function throttle(func, timeout) {
 
 let hold_interval;
 
-function holdElement(element, delay_secs, func, options = {}){
-  if(!element || !func ){ return; }
-  let hold_interval = null;
-  let progress = 0;
-  const old_background = element.style.backgroundColor;
-  const old_text = element.style.color;
+function holdElement(element, func, options = {}){
+  if(!element || !func ){ return; } 
+
+  // Keep a copy of the original element for reset
+  const old_element = element.cloneNode(true);
+
+  const hold_secs = options.hold_secs || 1;
+  const reset_event = options.reset_event || "mouseup";
   const background_color = options.background_color|| "red";
   const progress_color = options.progress_color || "darkred";
   element.style.color = options.text_color || "black";
 
+  let hold_interval;
+  let progress = 0;
 
-  element.addEventListener("mouseup", () => {
-    element.style.background = old_background;
-    element.style.color = old_text;
+  document.addEventListener(reset_event, () => {
     clearInterval(hold_interval);
-    console.log("Released early!");
+    element.replaceWith(old_element);
   }, { once: true });
 
   hold_interval = setInterval(() => {
     progress++;
     if(progress < 100){
-    element.style.background = 
-    `linear-gradient(
-      to right,
-      ${progress_color} 0%,
-      ${progress_color} ${progress}%,
-      ${background_color} ${progress}%,
-      ${background_color} 100%
-    )`
+      element.style.background = 
+      `linear-gradient(
+        to right,
+        ${progress_color} 0%,
+        ${progress_color} ${progress}%,
+        ${background_color} ${progress}%,
+        ${background_color} 100%
+      )`;
     }else{
-      element.style.background = old_background;
-      element.style.color = old_text;
       clearInterval(hold_interval);
+      element.replaceWith(old_element);
       func();
     }
-  }, delay_secs * 10);
+  }, hold_secs * 10);
 }
 
 // Displays an message box on top of the element, with positional and animation options
