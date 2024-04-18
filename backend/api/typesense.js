@@ -46,19 +46,21 @@ async function addAlbum(album, query){
   }
 }
 
-async function query(album_query){
+async function query(query_term, query_field = "albums"){  
   const query = {
-    'q'         : album_query,
-    'query_by'  : 'name,artists.name,track_list.name,aliases',
+    'q': query_term,
     'pre_segmented_query': true,
     'drop_tokens_threshold': 0
   }
 
-  let query_result = await CLIENT.collections('albums').documents().search(query)
-                                 .catch(e => {});
+  switch(query_field){
+    case "albums": query['query_by'] = 'name, artists.name, track_list.name, aliases'; break;
+  }
+
+  const query_result = await CLIENT.collections(query_field).documents().search(query).catch(e => {});
 
   if(!query_result) { return null; }
-                              
+     
   if(query_result.hits.length != 0){
     let response = [];
     for (const hit of query_result.hits){

@@ -3,7 +3,7 @@ dotenv.config();
 
 const CLIENT_ID = process.env.spotify_client_id;
 const CLIENT_SECRET = process.env.spotify_client_secret;
-const REDIRECT_URI = `http://${process.env.server_ip}:${process.env.server_port}/callback`;
+const REDIRECT_URI = `${process.env.server_address}/callback`;
 let CLIENT;
 
 authorize(null)

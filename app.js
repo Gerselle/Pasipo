@@ -265,16 +265,17 @@ app.get("/logout", async function(req, res){
   }
 });
 
-app.get("/search/:query", async function(req, res){
+app.get("/search/:query/:field", async function(req, res){
   const query = req.params.query;
-  const check_ts = await typesense.query(query);
+  const field = req.params.field;
+  const check_ts = await typesense.query(query, field);
 
   if(check_ts){
-    res.send(check_ts[0]);
+    res.send(check_ts);
   }else{
     const search_response = await spotify.albumSearch(query);
     if(search_response){
-      res.send(search_response);
+      res.send([search_response]);
       typesense.addAlbum(search_response, query);
       postgres.addAlbum(search_response);
     }else{
@@ -282,6 +283,7 @@ app.get("/search/:query", async function(req, res){
     }
   }
 });
+
 app.get("/refresh_albums", async function(req, res){
   res.redirect("/"); return; // Simple lock for now, make admin accounts and reenable this endpoint
   const album_ids = await postgres.getAlbumIds();

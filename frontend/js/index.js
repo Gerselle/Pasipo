@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // Current user will always either be the session's user or a local user.
 async function updateCurrentUser(){
-  await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/check`)
+  await fetch(`${ENV.SERVER_ADDRESS}/check`)
         .then( async (response) => { 
           CURRENT_USER = await response.json();
           if(CURRENT_USER.user_id){
@@ -264,7 +264,6 @@ async function dbAccess(store, data, operation){
 
 // User login/logout functions
 async function requestAccess(access_value){
-  console.log(access_value)
   const username_element = docId("user_name");
   const password_element = docId("pass_word");
   
@@ -278,7 +277,7 @@ async function requestAccess(access_value){
     access_request["pass_confirm"] = docId("pass_confirm").value;
   } 
   
-  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/access`, {
+  fetch(`${ENV.SERVER_ADDRESS}/access`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify(access_request)
@@ -312,7 +311,7 @@ async function authorize(){
   docId("profile").style.display = "none";
   if(userLoggedIn()){ // Logout if logged in
     pushUser();
-    fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/logout`)
+    fetch(`${ENV.SERVER_ADDRESS}/logout`)
       .then(async (response) => {   
         const local = await response.json();
         sendEvent(playerEvent, {action: "disconnect"});
@@ -326,7 +325,7 @@ async function authorize(){
 }
 
 async function oAuth(service, action){
-  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/oauth`, {
+  fetch(`${ENV.SERVER_ADDRESS}/oauth`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -351,7 +350,7 @@ function clearUser(){
 }
 
 async function pullUser(){
-  fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
+  fetch(`${ENV.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -368,7 +367,7 @@ async function pullUser(){
       }
     });  
 
-  await fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
+  await fetch(`${ENV.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -392,7 +391,7 @@ async function pushUser(){
   if(userLoggedIn()){
     const user_albums = await dbAccess("user_albums", null, "getAll");
 
-    fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
+    fetch(`${ENV.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -406,7 +405,7 @@ async function pushUser(){
 
     const user_ratings =  await dbAccess("user_ratings", null, "getAll");
 
-    fetch(`http://${ENV.SERVER_ADDRESS + ENV.NODE_PORT}/action`, {
+    fetch(`${ENV.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({

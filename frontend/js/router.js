@@ -6,21 +6,17 @@ document.addEventListener("click", (e) => {
 });
 
 const ENV = {
-  SERVER_ADDRESS : "localhost",
-  NODE_PORT : ":45426",
-  TS_PORT : "8108",
-  TS_KEY : "LfdaROHpKBU4o5SE6hK9jOpsw4woA4tf",
+  SERVER_ADDRESS : "https://pasipo.gerselle.com",
+  TS_KEY : "V1bpY0TqBLmsbYSGgzp7BXGzWRGtcYRa"
 }
 
 const TS_CLIENT = new Typesense.Client({
   'nodes': [{
-    'host': ENV.SERVER_ADDRESS,
-    'port': ENV.TS_PORT,
-    'protocol': 'http'
+    url: ENV.SERVER_ADDRESS + "/typesense"
   }],
   'apiKey': ENV.TS_KEY,
   'connectionTimeoutSeconds': 2
-})
+});
 
 async function route(event){
   event.preventDefault();
