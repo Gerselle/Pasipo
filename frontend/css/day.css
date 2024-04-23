@@ -54,6 +54,7 @@
 
 .calendar .header{
   display: flex;
+  width: 100%;
   justify-content: center;
   height: 50px;
   background-color: var(--bg-300);
@@ -142,7 +143,7 @@
   justify-content: space-evenly;
   border-radius: 10px;
   padding: 5px;
-  margin-bottom: 10px;
+  gap: 5px;
   width: 100%;
   background-color: var(--bg-100);
 }
@@ -151,9 +152,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 50px;
-  max-width: 75%;
   font-size: var(--large-font);
+  min-width: 0;
 }
 
 .current-album span{
@@ -177,9 +177,7 @@
   cursor: pointer;
   display: flex;
   flex-grow: 1;
-  min-height: fit-content;
   background-color: var(--bg-200);
-  height: 50px;
   border-radius: 10px;
   padding: 5px;
   font-size: var(--default-font);
@@ -190,9 +188,9 @@
 }
 
 .album .header{
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  gap: 5px;
   align-items: center;
   width: 100%;
   min-width: 300px;
@@ -202,6 +200,7 @@
 }
 
 .album .header .info{
+  gap: 10px;
   display: flex;
   width: 100%;
   min-height: 100px;
@@ -249,24 +248,23 @@
 .album .header .description{
   display: flex;
   flex-direction: column;
-  margin-left: 10px;
   flex-grow: 1;
   background-color: var(--bg-100);
   padding: 10px;
   border-radius: 10px;
+  min-width: 0;
 }
 
 .description .title{
   width: 100%;
-  height: fit-content;
+  height: 1.5em;
   font-size: var(--large-font);
   color: var(--text-100);
 }
 
 .description .subtitle{
-  display: row;
   width: 100%;
-  height: fit-content;
+  height: 1.5em;
   font-size: var(--default-font);
   color: var(--text-200);
 }
@@ -306,7 +304,7 @@
 .album .tracklist{
   width: 100%;
   height: 100%;
-  min-height: 50px;
+  min-height: 100px;
   overflow-y: auto;
   background-color: var(--bg-300);
   border-radius: 0 0 1vh 1vh;
@@ -339,7 +337,6 @@
 
 .tracklist .num{
   width: 50px;
-  height: 100%;
   font-size: var(--small-font);
   text-align: center;
 }
@@ -347,6 +344,8 @@
 .tracklist .star{
   opacity: 0;
   width: 50px;
+  overflow: hidden;
+  height: 50px;
   background-color: black;
   mask-size: contain;
   filter: var(--filter);
@@ -367,10 +366,8 @@
 }
 
 .tracklist .title{
-  max-width: 0px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: table-cell;
+  max-width: 0;
 }
 
 /* Transition from landscape to portrait */
@@ -378,6 +375,7 @@
   .album .cover{
     width: 15%;
   }
+
 }
 
 @media (max-width: 500px) {

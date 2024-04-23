@@ -123,8 +123,6 @@ function throttle(func, timeout) {
   };
 }
 
-let hold_interval;
-
 function holdElement(element, func, options = {}){
   if(!element || !func ){ return; } 
 
@@ -163,6 +161,29 @@ function holdElement(element, func, options = {}){
     }
   }, hold_secs * 10);
 }
+
+document.addEventListener("mouseover", (event) =>{
+  const target = event.target;
+  if(!target.classList.contains("marquee")){ return;}
+
+  if(target.clientWidth < target.scrollWidth){
+    let marquee_interval;
+    const old_text = target.innerHTML;
+    let current_text = old_text;
+
+    marquee_interval = setInterval(() => {
+      if(target.clientWidth < target.scrollWidth){
+        current_text = current_text.substring(1);
+      }
+      target.innerHTML = current_text;
+    }, 50);
+
+    target.addEventListener("mouseleave", () => {
+      clearInterval(marquee_interval);
+      target.innerHTML = old_text;
+    }, { once: true });
+  }
+});
 
 // Displays an message box on top of the element, with positional and animation options
 function displayMessage(target, message, options = {}){

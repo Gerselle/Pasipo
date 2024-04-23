@@ -560,7 +560,7 @@ async function displayAlbum(album, rating){
       tracklist_update += 
       ` <tr track_index=${track_index} track_id=${track.id}>
           <td class="num">${track_index + 1}</td>
-          <td class="title" title="${track.name}">${track.name}</td>
+          <td class="marquee title">${track.name}</td>
           ${track_star}
           <td class="no-select num time">${dayjs(track.length).format("mm:ss")}</td>
         </tr>

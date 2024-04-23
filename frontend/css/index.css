@@ -52,12 +52,11 @@
   text-decoration: underline;
 }
 
-.ellipsis{
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;  
-  text-overflow: ellipsis;
+.marquee{
+  display: block;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Default for the message box */
@@ -279,7 +278,7 @@ a:hover{
 /* Main content section */
 
 .content{
-  width: 100%;
+  width: 100dvw;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
