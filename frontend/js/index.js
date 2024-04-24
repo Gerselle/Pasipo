@@ -30,7 +30,7 @@ async function updateLayout(){
   if(CURRENT_USER.profile_image){
     docId("icon").innerHTML = `<img src="${CURRENT_USER.profile_image}" alt="icon">`;
   }else{
-    docId("icon").innerHTML = CURRENT_USER.user_name;
+    docId("icon").innerHTML = CURRENT_USER.profile_name[0].toUpperCase();
   }
 
   if(CURRENT_USER.active_token){ sendEvent(playerEvent, {action: "start"}); }
@@ -130,7 +130,7 @@ function holdElement(element, func, options = {}){
   const old_element = element.cloneNode(true);
 
   const hold_secs = options.hold_secs || 1;
-  const reset_event = options.reset_event || "mouseup";
+  const reset_event = options.reset_event || "pointerup";
   const background_color = options.background_color|| "red";
   const progress_color = options.progress_color || "darkred";
   element.style.color = options.text_color || "black";
@@ -162,11 +162,11 @@ function holdElement(element, func, options = {}){
   }, hold_secs * 10);
 }
 
-document.addEventListener("mouseover", (event) =>{
+document.addEventListener("pointerover", (event) => {
   const target = event.target;
   if(!target.classList.contains("marquee")){ return;}
 
-  if(target.clientWidth < target.scrollWidth){
+  if(target.clientWidth < target.scrollWidth){  
     let marquee_interval;
     const old_text = target.innerHTML;
     let current_text = old_text;
@@ -174,11 +174,14 @@ document.addEventListener("mouseover", (event) =>{
     marquee_interval = setInterval(() => {
       if(target.clientWidth < target.scrollWidth){
         current_text = current_text.substring(1);
+      }else{
+        clearInterval(marquee_interval);
+        current_text = old_text;
       }
       target.innerHTML = current_text;
     }, 50);
 
-    target.addEventListener("mouseleave", () => {
+    target.addEventListener("pointerleave", () => {
       clearInterval(marquee_interval);
       target.innerHTML = old_text;
     }, { once: true });

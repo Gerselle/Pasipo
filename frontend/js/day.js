@@ -42,12 +42,11 @@ docId("album_tracklist").addEventListener("click", async (event) => {
 function starTrack(row){
   if(!row || !VIEWED_USER.is_current_user){ return; }
   const star = row.querySelector(`[action="star"]`);
-  const track = row.querySelector(`[class="title"]`);
+  const track = row.querySelector(`.title`);
   if(!star || !track){ return; }
-
   star.classList.toggle("starred");
   const track_name = track.innerHTML;
-  const rating_position = parseInt(row.getAttribute("track_index")) + 1; 
+  const rating_position = parseInt(row.getAttribute("track_index")) + 1;
   
   if(star.classList.contains("starred")){
     star.title = `Unstar ${track_name}`;
@@ -133,28 +132,29 @@ function toggleNotes(notes){
   printDebug(notes)
 }
 
-docId("album_rating").addEventListener("mousemove", mouseRating);
-docId("album_rating").addEventListener("mouseout", mouseRating);
-docId("album_rating").addEventListener("mouseover", mouseRating);
-docId("album_rating").addEventListener("click", mouseRating);
+docId("album_rating").addEventListener("pointermove", ratingUpdate);
+docId("album_rating").addEventListener("pointerout", ratingUpdate);
+docId("album_rating").addEventListener("pointerover", ratingUpdate);
+docId("album_rating").addEventListener("click", ratingUpdate);
 
-function mouseRating(event){
+function ratingUpdate(event){
   if(!VIEWED_USER.is_current_user){ return; }
 
   switch(event.type){
-    case "mousemove":
+    case "pointermove":
       let round = Math.round((event.offsetX/event.target.offsetWidth) * 10) * 10;
       docId("rating_level").style.width = `${round}%`;
     break;
-    case "mouseover":
+    case "pointerover":
       CURRENT_RATING = docId("rating_level").style.width;
       break;
-    case "mouseout":
+    case "pointerout":
       docId("rating_level").style.width = CURRENT_RATING;
       break;
     case "click":
       let new_rating = Math.round((event.offsetX/event.target.offsetWidth) * 10) * 10;
       CURRENT_RATING = `${new_rating}%`;
+      docId("rating_level").style.width = CURRENT_RATING;
       updateRating(new_rating/10, 0);
     break;
   }

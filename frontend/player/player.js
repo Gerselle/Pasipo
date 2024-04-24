@@ -16,20 +16,19 @@ document.addEventListener("player", async (event) => {
   switch(event.detail.action){
     case "start":
       player.addEventListener("click", playerUpdate);
-      p_vol_bar.addEventListener("mousedown", trackVolume);
-      window.addEventListener('mouseup', sendVolume);
+      p_vol_bar.addEventListener("pointerdown", trackVolume);
+      window.addEventListener('pointerup', sendVolume);
       sendEvent(musicEvent, {action: "start"});
     break;
     case "loadAlbum": loadAlbum(event.detail.data); break;
     case "setTrack": if(playerLoaded()){ setTrack(event.detail.data); } break;
     case "disconnect": if(musicEvent){ sendEvent(musicEvent, {action: "disconnect"}) } break;
-    default: break;
   }
 });
 
 window.onbeforeunload = function(){
   if(service_player){ sendEvent(musicEvent, {action: "disconnect"}); }
-  if(progress_interval){ clearInterval(progress_interval); }
+  clearInterval(progress_interval);
 };
 
 function playerLoaded(){
@@ -144,13 +143,13 @@ function toggleVolume(){
 
 function trackVolume(event){
   setVolume(event);
-  window.addEventListener('mousemove', setVolume);
+  window.addEventListener('pointermove', setVolume);
 }
 
 function sendVolume(){
   p_vol_dot.style.display = "none";
   p_vol_level.style.backgroundColor = "var(--bg-300)";
-  window.removeEventListener('mousemove', setVolume);
+  window.removeEventListener('pointermove', setVolume);
   sendEvent(musicEvent, {action: "volume", volume: current_volume});
 }
 
@@ -262,10 +261,22 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
       switch(event.detail.action){
         case "start": 
           await loadSpotifyPlayer();
-          if(player_interval){ clearInterval(player_interval); }
+          clearInterval(player_interval)
           player_interval = setInterval(loadSpotifyPlayer, 1000 * 60 * 59); // Reload player every 59 mins
-        break;
-        case "load": loadSpotifyTrack(event.detail.album_id, event.detail.track_pos); break;
+          break;
+        case "connect" :
+          await fetch(`${ENV.SERVER_ADDRESS}/loadplayer/spotify/${sessionGet("player_id")}`)
+                .then(()=>{
+                  player_active = true;
+                  displayMessage(player, "Player loading...", { offsetY: 75, delay: 1, duration: 0 });
+                 });          
+          break;
+        case "load":
+          fetch(`${ENV.SERVER_ADDRESS}/loadtrack/spotify/
+                 ${event.detail.album_id}/
+                 ${event.detail.track_pos}`)
+          .catch((error) => console.log(error));
+          break;
         case "play": service_player.togglePlay(); break;
         case "next": service_player.nextTrack(); break;
         case "prev": service_player.previousTrack(); break;
@@ -274,13 +285,6 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
         case "seek": service_player.seek(event.detail.seek); break;
         case "volume": service_player.setVolume(event.detail.volume); break;
         case "update": service_player.getCurrentState().then((state) => updateSpotifyPlayer(state)); break;
-        case "connect" :
-          await fetch(`${ENV.SERVER_ADDRESS}/loadplayer/spotify/${sessionGet("player_id")}`)
-                .then(()=>{
-                  player_active = true;
-                  displayMessage(player, "Player loading...", { offsetY: 75, delay: 1, duration: 0 });
-                 });          
-        break;
         case "disconnect": await service_player.disconnect(); player_active = false; break;
       }
     });
