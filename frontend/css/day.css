@@ -12,7 +12,7 @@
   padding: 10px;
   background-color: var(--bg-200);
   border-radius: 10px;
-  font-size: 1em;
+  font-size: 0.9em;
 }
 
 .navigation{
@@ -193,7 +193,6 @@
   gap: 5px;
   align-items: center;
   width: 100%;
-  min-width: 300px;
   background-color: var(--bg-200);
   border-radius: 1vh 1vh 0 0 ;
   padding: 10px;
@@ -374,12 +373,5 @@
 @media (max-aspect-ratio: 1) {
   .album .cover{
     width: 15%;
-  }
-
-}
-
-@media (max-width: 500px) {
-  .navigation .date{
-    min-width: 250px;
   }
 }

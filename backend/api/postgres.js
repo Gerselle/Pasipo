@@ -87,10 +87,6 @@ async function getAlbumIds(service){
     return album_ids;
 }
 
-async function clearAlbums(service){
-    await query("TRUNCATE albums");
-}
-
 // Album/rating info of another user
 async function getViewedUser(viewed_user, current_user){
 

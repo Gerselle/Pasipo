@@ -152,9 +152,35 @@ app.post("/action", async function(req, res){
           res.send({error: "No valid rating action provided."});
       }
       break;
+
+    case "setting":
+        switch(action){
+          case "user_name":
+            res.send(await postgres.updateUserName(user, data));
+            break;
+          case "pass_word": 
+            res.send(await postgres.updatePassWord(user, data));
+            break;
+          case "profile_name":
+            res.send(await postgres.updateProfileName(user, data));  
+            break;
+          case "profile_image": 
+            res.send(await postgres.updateProfileImage(user, data));
+            break;
+          case "visibility":
+            res.send(await postgres.updateUserName(user, data));
+            break;
+          case "add_service": break;
+          case "remove_service": break;
+          case "deactivate": break;
+          case "sync": break;
+          default:
+            res.send({error: "No valid setting action provided."});
+        }
+        break;
     
     default:
-      res.send({error: "No update field provided."});
+      res.send({error: "No update field provided."});      
   }
 
 });
@@ -285,7 +311,7 @@ app.get("/search/:query/:field", async function(req, res){
 });
 
 app.get("/refresh_albums", async function(req, res){
-  res.redirect("/"); return; // Simple lock for now, make admin accounts and reenable this endpoint
+  //res.redirect("/"); return; // Simple lock for now, make admin accounts and reenable this endpoint
   const album_ids = await postgres.getAlbumIds();
   const refreshed_albums = await spotify.getAlbums(album_ids);
   typesense.refreshAlbums(refreshed_albums);

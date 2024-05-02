@@ -29,8 +29,8 @@
 }
 
 :root{
-  --max-width: 2000px;
-  --min-width: 250px;
+  --max-width: 1500px;
+  --min-width: 320px;
   --default-font: clamp(1em, 2dvh, 2em);
   --large-font: calc(var(--default-font) * 1.25);
   --small-font: calc(var(--default-font) * 0.75);
@@ -280,6 +280,8 @@ a:hover{
 .content{
   width: 100dvw;
   flex-grow: 1;
+  min-width: var(--min-width);
+  max-width: var(--max-width);
   display: flex;
   flex-direction: column;
   align-items: center;
