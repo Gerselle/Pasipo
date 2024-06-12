@@ -187,7 +187,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
 
   const loadSpotifyPlayer = async () => {
     if(service_player){ await service_player.disconnect(); }
-    const response = await fetch(`${ENV.SERVER_ADDRESS}/token/spotify`)
+    const response = await fetch(`${window.env.SERVER_ADDRESS}/token/spotify`)
       .catch((error) => console.log(error));
     const token = await response.json();
     const player_name = 'Paispo Web Player';
@@ -249,7 +249,7 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
   }
 
   function loadSpotifyTrack(album_id, track_pos){
-     fetch(`${ENV.SERVER_ADDRESS}/loadtrack/spotify/${album_id}/${track_pos}`)
+     fetch(`${window.env.SERVER_ADDRESS}/loadtrack/spotify/${album_id}/${track_pos}`)
      .catch((error) => console.log(error));
   };
 
@@ -265,14 +265,14 @@ window.onSpotifyWebPlaybackSDKReady = async () =>{
           player_interval = setInterval(loadSpotifyPlayer, 1000 * 60 * 59); // Reload player every 59 mins
           break;
         case "connect" :
-          await fetch(`${ENV.SERVER_ADDRESS}/loadplayer/spotify/${sessionGet("player_id")}`)
+          await fetch(`${window.env.SERVER_ADDRESS}/loadplayer/spotify/${sessionGet("player_id")}`)
                 .then(()=>{
                   player_active = true;
                   displayMessage(player, "Player loading...", { offsetY: 75, delay: 1, duration: 0 });
                  });          
           break;
         case "load":
-          fetch(`${ENV.SERVER_ADDRESS}/loadtrack/spotify/
+          fetch(`${window.env.SERVER_ADDRESS}/loadtrack/spotify/
                  ${event.detail.album_id}/
                  ${event.detail.track_pos}`)
           .catch((error) => console.log(error));

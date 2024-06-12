@@ -5,16 +5,11 @@ document.addEventListener("click", (e) => {
   route(e);
 });
 
-const ENV = {
-  SERVER_ADDRESS : "https://pasipo.gerselle.com",
-  TS_KEY : "V1bpY0TqBLmsbYSGgzp7BXGzWRGtcYRa"
-}
-
 const TS_CLIENT = new Typesense.Client({
   'nodes': [{
-    url: ENV.SERVER_ADDRESS + "/typesense"
+    url: window.env.SERVER_ADDRESS + "/typesense"
   }],
-  'apiKey': ENV.TS_KEY,
+  'apiKey': window.env.TS_KEY,
   'connectionTimeoutSeconds': 2
 });
 

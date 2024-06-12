@@ -10,10 +10,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   await dbStart();
   await updateLayout();
 });
-
 // Current user will always either be the session's user or a local user.
 async function updateCurrentUser(){
-  await fetch(`${ENV.SERVER_ADDRESS}/check`)
+  await fetch(`${window.env.SERVER_ADDRESS}/check`)
         .then( async (response) => { 
           CURRENT_USER = await response.json();
           if(CURRENT_USER.user_id){
@@ -301,7 +300,7 @@ async function requestAccess(access_value){
     access_request["pass_confirm"] = docId("pass_confirm").value;
   } 
   
-  fetch(`${ENV.SERVER_ADDRESS}/access`, {
+  fetch(`${window.env.SERVER_ADDRESS}/access`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify(access_request)
@@ -335,7 +334,7 @@ async function authorize(){
   docId("profile").style.display = "none";
   if(userLoggedIn()){ // Logout if logged in
     pushUser();
-    fetch(`${ENV.SERVER_ADDRESS}/logout`)
+    fetch(`${window.env.SERVER_ADDRESS}/logout`)
       .then(async (response) => {   
         const local = await response.json();
         sendEvent(playerEvent, {action: "disconnect"});
@@ -349,7 +348,7 @@ async function authorize(){
 }
 
 async function oAuth(service, action){
-  fetch(`${ENV.SERVER_ADDRESS}/oauth`, {
+  fetch(`${window.env.SERVER_ADDRESS}/oauth`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -374,7 +373,7 @@ function clearUser(){
 }
 
 async function pullUser(){
-  fetch(`${ENV.SERVER_ADDRESS}/action`, {
+  fetch(`${window.env.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -391,7 +390,7 @@ async function pullUser(){
       }
     });  
 
-  await fetch(`${ENV.SERVER_ADDRESS}/action`, {
+  await fetch(`${window.env.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -415,7 +414,7 @@ async function pushUser(){
   if(userLoggedIn()){
     const user_albums = await dbAccess("user_albums", null, "getAll");
 
-    fetch(`${ENV.SERVER_ADDRESS}/action`, {
+    fetch(`${window.env.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -429,7 +428,7 @@ async function pushUser(){
 
     const user_ratings =  await dbAccess("user_ratings", null, "getAll");
 
-    fetch(`${ENV.SERVER_ADDRESS}/action`, {
+    fetch(`${window.env.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({

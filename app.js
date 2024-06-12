@@ -6,6 +6,7 @@ const cors = require("cors");
 // Module for .env variables
 const dotenv = require("dotenv");
 dotenv.config();
+const fs = require('fs');
 
 // Custom modules for API calls
 const spotify = require("./backend/api/spotify.js");
@@ -331,8 +332,11 @@ app.get("/*", (req, res) => {
     case "css": 
       res.sendFile(__dirname + "/frontend/css/404.css");
       break;
-    default:  
-      res.sendFile(__dirname + "/frontend/index.html");
+    default:
+      let index = fs.readFileSync(path.join(__dirname, "/frontend/index.html"), 'utf8');
+      index = index.replace('{{SERVER_ADDRESS}}', process.env.server_address);
+      index = index.replace('{{TS_KEY}}', process.env.tsclientkey);
+      res.send(index);
   }
 });
 

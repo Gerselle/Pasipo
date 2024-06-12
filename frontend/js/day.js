@@ -98,7 +98,7 @@ async function parseDayPath(){
   if(path_user === "local"){
     VIEWED_USER = {is_current_user: true, user_name: CURRENT_USER.user_name};
   }else if (!VIEWED_USER || path_user !== VIEWED_USER.user_name){
-    await fetch(`${ENV.SERVER_ADDRESS}/viewing/${path_user}`)
+    await fetch(`${window.env.SERVER_ADDRESS}/viewing/${path_user}`)
           .then(async(response) => {
             let viewed_response = await response.json();
             if(viewed_response.error){
@@ -167,7 +167,7 @@ async function updateRating(rating, position = 0){
   new_rating[position] = rating;
   dbAccess("user_ratings", {id: SELECTED_ALBUM.id, rating: new_rating}, "update");
 
-  fetch(`${ENV.SERVER_ADDRESS}/action`, {
+  fetch(`${window.env.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -197,7 +197,7 @@ async function getAlbum(album_id, db_checked = false){
   return db_album ? db_album : await fetchAlbum(album_id);
   
   async function fetchAlbum(album_id){
-    const response = await fetch(`${ENV.SERVER_ADDRESS}/album/${album_id}`);
+    const response = await fetch(`${window.env.SERVER_ADDRESS}/album/${album_id}`);
     const album = await response.json();
     if(!album.error){
       await dbAccess("albums", album, "add");
@@ -317,7 +317,7 @@ async function addAlbum(album){
 
   if(current_album == null){
     if(userLoggedIn()){
-      fetch(`${ENV.SERVER_ADDRESS}/action`, {
+      fetch(`${window.env.SERVER_ADDRESS}/action`, {
       'method': "POST",
       'headers': { "Content-Type": "application/json" },
       'body': JSON.stringify({
@@ -337,7 +337,7 @@ async function sendAlbumUpdate(){
   if(SELECTED_ALBUM == null){return;}
 
   if(userLoggedIn()){
-    fetch(`${ENV.SERVER_ADDRESS}/action`, {
+    fetch(`${window.env.SERVER_ADDRESS}/action`, {
     'method': "POST",
     'headers': { "Content-Type": "application/json" },
     'body': JSON.stringify({
@@ -358,7 +358,7 @@ async function sendAlbumUpdate(){
 async function sendAlbumDelete(album_delete){
   holdElement(album_delete, function(){
     if(userLoggedIn()){
-      fetch(`${ENV.SERVER_ADDRESS}/action`, {
+      fetch(`${window.env.SERVER_ADDRESS}/action`, {
       'method': "POST",
       'headers': { "Content-Type": "application/json" },
       'body': JSON.stringify({
@@ -431,7 +431,7 @@ async function searchAlbum(event = null) {
   if(event && event.target.nodeName === "LI"){
     album = PRESEARCH.albums[event.target.getAttribute("album_id")];
   }else{
-    await fetch(`${ENV.SERVER_ADDRESS}/search/${album_query.value}/:albums`)
+    await fetch(`${window.env.SERVER_ADDRESS}/search/${album_query.value}/:albums`)
           .then(async (response) => {
             result = await response.json();
             album = result.error ? {error: result.error} : result[0]; 
@@ -512,10 +512,10 @@ async function displayAlbum(album, rating){
     album_img.href = album.url;
     album_img.innerHTML = `<img src="${album.image}" alt="${album.name}">`;
     
-    let artists = album.artists ? `<a "href="${album.artists[0].url}">${album.artists[0].name}</a>` : "";
+    let artists = album.artists ? `<a href="${album.artists[0].url}">${album.artists[0].name}</a>` : "";
     
     for(let i = 1; i < album.artists.length; i++){
-      artists += `, <a "href="${album.artists[i].url}">${album.artists[i].name}</a>`;
+      artists += `, <a href="${album.artists[i].url}">${album.artists[i].name}</a>`;
     }
     album_artists.innerHTML = artists;
   
